@@ -59,4 +59,15 @@ typical value would hide a real difference between users.
 """)
 
 with st.expander("Show coverage per user"):
-    st.dataframe(per_user.style.format({"SleepCoverage": "{:.0%}"}), width="stretch")
+    per_user_display = per_user.copy()
+    per_user_display.index = per_user_display.index.astype(str)
+    st.dataframe(
+        per_user_display, width="stretch",
+        column_config={
+            "DaysRecorded": st.column_config.NumberColumn("Days recorded"),
+            "DaysNotWorn": st.column_config.NumberColumn("Days not worn"),
+            "NightsWithSleep": st.column_config.NumberColumn("Nights with sleep"),
+            "SleepCoverage": st.column_config.ProgressColumn("Sleep coverage", format="percent",
+                                                             min_value=0, max_value=1),
+        },
+    )

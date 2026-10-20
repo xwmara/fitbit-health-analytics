@@ -1,8 +1,9 @@
 """Missing values: median imputation and why missing sleep is not random."""
 
+import pandas as pd
 import streamlit as st
 
-from fitbit_analytics import analysis, data
+from fitbit_analytics import analysis, charts, data
 from app_pages.common import load_data
 
 daily_activity, sleep_data, df, df_sleep = load_data()
@@ -14,35 +15,27 @@ st.markdown(
     "why it would be the wrong choice for this data."
 )
 
-# Two columns to compare "before" and "after"
-col_before, col_after = st.columns(2)
+missing_counts = df.isnull().sum()
+# Fill the missing values and check again
+df_clean = data.fill_missing_with_median(df)
+after_counts = df_clean.isnull().sum()
 
-with col_before:
-    st.subheader("1. Before imputation")
-    missing_counts = df.isnull().sum()
-    # Show only the columns that actually have missing values
-    st.dataframe(missing_counts[missing_counts > 0], width="stretch")
+# Only the columns that actually have missing values
+has_missing = missing_counts[missing_counts > 0].index
+missing_table = pd.DataFrame({
+    "Column": [charts.label(c) if c != "ActivityDate_y" else "Sleep date (join key)" for c in has_missing],
+    "Missing before": missing_counts[has_missing].values,
+    "Share of days": (missing_counts[has_missing] / len(df) * 100).values,
+    "Missing after": after_counts[has_missing].values,
+})
 
-with col_after:
-    st.subheader("2. After imputation")
-
-    # Fill the missing values
-    df_clean = data.fill_missing_with_median(df)
-
-    # Check again
-    after_counts = df_clean.isnull().sum()
-    st.dataframe(after_counts[after_counts > 0], width="stretch")
-    st.caption("Every numeric column is complete after filling the gaps with the column median.")
-
-st.divider()
-
-st.subheader("Missing Values per Column (Before Imputation)")
-if missing_counts.sum() > 0:
-    # Plot only the columns with missing values
-    missing_plot_data = missing_counts[missing_counts > 0]
-    st.bar_chart(missing_plot_data)
-else:
-    st.write("No missing values were found in the dataset.")
+st.subheader("Before and after imputation")
+st.dataframe(
+    missing_table, hide_index=True, width="stretch",
+    column_config={"Share of days": st.column_config.NumberColumn(format="%.0f%%")},
+)
+st.caption(f"The sleep columns are missing on the same {missing_counts.max()} days. The sleep date is a "
+           "text column, so it is not filled; every numeric column is complete after filling the gaps with the column median.")
 
 with st.expander("Why the median?"):
     st.write("""
@@ -55,7 +48,9 @@ st.divider()
 # --- Missing sleep is not random ---
 st.subheader("Why the Models Do Not Use Imputed Sleep")
 comparison = analysis.compare_days_by_sleep_record(df)
-st.dataframe(comparison.round(0), width="stretch")
+st.dataframe(charts.readable(comparison).round(0).astype(int), width="stretch",
+             column_config={c: st.column_config.NumberColumn(format="localized")
+                            for c in charts.readable(comparison).columns})
 
 sed_without = comparison.loc["Without sleep record", "SedentaryMinutes"]
 sed_with = comparison.loc["With sleep record", "SedentaryMinutes"]

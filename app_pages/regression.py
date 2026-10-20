@@ -62,7 +62,15 @@ with tab_viz:
 with st.expander("Interpreting the Coefficients", expanded=True):
     # Raw coefficients use different units (per step vs. per minute), so compare standardized ones
     coef_table = analysis.standardized_coefficients(model, X, y)
-    st.dataframe(coef_table.set_index("Feature").round(4), width="stretch")
+    st.dataframe(
+        coef_table.assign(Feature=coef_table["Feature"].map(charts.label)).set_index("Feature"),
+        width="stretch",
+        column_config={
+            "Coefficient": st.column_config.NumberColumn("Coefficient (kcal per unit)", format="%.3f"),
+            "StdCoefficient": st.column_config.NumberColumn("Standardized effect", format="%.2f"),
+            "PValue": st.column_config.NumberColumn("p-value", format="%.4f"),
+        },
+    )
 
     significant = coef_table[coef_table["PValue"] < 0.05]
     top = significant.iloc[0]

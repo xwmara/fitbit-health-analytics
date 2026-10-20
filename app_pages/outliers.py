@@ -15,8 +15,9 @@ st.markdown(
 )
 
 col = st.selectbox(
-    "Select a variable to analyse:",
-    ["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes", "TotalMinutesAsleep"]
+    "Variable",
+    ["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes", "TotalMinutesAsleep"],
+    format_func=charts.label,
 )
 
 series = df[col].dropna()
@@ -54,6 +55,8 @@ st.write(
 if len(outliers) > 0:
     with st.expander(f"Show the {len(outliers)} outlier records"):
         st.write(f"These values fall outside the interval [{lower:.2f}, {upper:.2f}]")
-        st.dataframe(outliers[["Id", col]].sort_values(by=col, ascending=False))
+        table = outliers[["Id", col]].sort_values(by=col, ascending=False)
+        table["Id"] = table["Id"].astype(str)
+        st.dataframe(charts.readable(table), hide_index=True)
 else:
     st.caption("No outliers were detected for this variable.")

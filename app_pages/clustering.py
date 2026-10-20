@@ -29,25 +29,37 @@ df_cluster["Cluster"] = analysis.kmeans_clusters(df_cluster[features], n_cluster
 cluster_means = df_cluster.groupby("Cluster")[features].mean()
 cluster_names = analysis.name_clusters(cluster_means)
 
-# --- RESULTS ---
-col_cl1, col_cl2 = st.columns([1, 2])
-
-with col_cl1:
-    st.subheader(" Cluster Sizes")
-    st.write(df_cluster["Cluster"].value_counts())
-
-    st.subheader(" Cluster Profiles")
-    st.write("\n".join(
-        f"- **Cluster {c}: {cluster_names[c]}** "
-        f"(~{row.TotalSteps:,.0f} steps, {row.VeryActiveMinutes:.0f} very active minutes "
-        f"and {row.TotalMinutesAsleep / 60:.1f} hours of sleep per day)"
-        for c, row in cluster_means.iterrows()
-    ))
-
-with col_cl2:
-    st.subheader(" Cluster Comparison")
-    st.dataframe(cluster_means.assign(Profile=cluster_means.index.map(cluster_names)),
-                 width="stretch")
+# --- RESULTS: one row per profile, from least to most active ---
+st.subheader("Cluster Profiles")
+profile_table = charts.readable(cluster_means).assign(
+    Profile=cluster_means.index.map(cluster_names),
+    Days=df_cluster["Cluster"].value_counts(),
+)
+profile_table["Sleep (h)"] = profile_table.pop("Sleep (min)") / 60
+profile_table = (
+    profile_table.reset_index()
+    .set_index("Profile")
+    .loc[analysis.CLUSTER_NAMES, ["Cluster", "Days", "Steps", "Calories (kcal)", "Sedentary (min)",
+                                  "Very active (min)", "Sleep (h)"]]
+)
+display_table = profile_table.round(0)
+display_table["Sleep (h)"] = profile_table["Sleep (h)"].round(1)
+number = st.column_config.NumberColumn(format="localized")
+st.dataframe(
+    display_table,
+    width="stretch",
+    column_config={
+        **{c: number for c in ["Days", "Steps", "Calories (kcal)", "Sedentary (min)", "Very active (min)"]},
+        "Sleep (h)": st.column_config.NumberColumn(format="%.1f"),
+    },
+)
+most_sleep = profile_table["Sleep (h)"].idxmax()
+least_sleep = profile_table["Sleep (h)"].idxmin()
+st.write(
+    f"Average values per day. Sleep does not simply follow activity: the **{most_sleep}** group sleeps the "
+    f"most ({profile_table.loc[most_sleep, 'Sleep (h)']:.1f} h) and the **{least_sleep}** group the least "
+    f"({profile_table.loc[least_sleep, 'Sleep (h)']:.1f} h)."
+)
 
 st.divider()
 

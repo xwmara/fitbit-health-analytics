@@ -169,6 +169,8 @@ def test_train_logistic_regression_on_separable_data():
     assert result.recall > 0.9
     assert result.roc_auc > 0.95
     assert result.confusion_matrix.shape == (2, 2)
+    assert list(result.report_table.columns) == ["precision", "recall", "f1-score", "support"]
+    assert result.report_table.loc["1", "recall"] == pytest.approx(result.recall)
     assert result.coefficients["Feature"].iloc[0] == "signal"
     assert result.coefficients["Importance"].is_monotonic_decreasing
 

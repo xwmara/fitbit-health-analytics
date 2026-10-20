@@ -16,6 +16,30 @@ MUTED = "#6B7280"
 # Fixed colour per cluster profile, so a profile keeps its colour in every chart
 CLUSTER_COLORS = {"Low activity": AMBER, "Moderate activity": BLUE, "Very active": PRIMARY}
 
+# Readable names for the dataset columns, used in tables and chart axes
+LABELS = {
+    "TotalSteps": "Steps",
+    "TotalDistance": "Distance (km)",
+    "Calories": "Calories (kcal)",
+    "SedentaryMinutes": "Sedentary (min)",
+    "VeryActiveMinutes": "Very active (min)",
+    "FairlyActiveMinutes": "Fairly active (min)",
+    "LightlyActiveMinutes": "Lightly active (min)",
+    "TotalMinutesAsleep": "Sleep (min)",
+    "TotalTimeInBed": "Time in bed (min)",
+    "TotalSleepRecords": "Sleep records",
+}
+
+
+def label(column):
+    """Return the readable name of a column (or the column itself if it has none)."""
+    return LABELS.get(column, column)
+
+
+def readable(df):
+    """Return a copy of `df` with readable column names."""
+    return df.rename(columns=LABELS)
+
 
 def apply_style():
     """Set a clean, consistent Matplotlib style: light grid, no top/right borders, muted labels."""

@@ -178,6 +178,7 @@ class ClassificationResult:
     roc_auc: float  # NaN if the test set contains only one class
     confusion_matrix: np.ndarray
     report: str
+    report_table: pd.DataFrame  # the classification report as a table (one row per class)
     coefficients: pd.DataFrame  # columns: Feature, Importance (sorted descending)
 
 
@@ -231,6 +232,9 @@ def train_logistic_regression(X, y, groups=None, test_size=0.3, random_state=42,
         roc_auc=roc_auc_score(y_test, y_proba) if both_classes_in_test else float("nan"),
         confusion_matrix=confusion_matrix(y_test, y_pred, labels=[0, 1]),
         report=classification_report(y_test, y_pred, labels=[0, 1], zero_division=0),
+        report_table=pd.DataFrame(
+            classification_report(y_test, y_pred, labels=[0, 1], zero_division=0, output_dict=True)
+        ).T.drop(index="accuracy", errors="ignore"),
         coefficients=coefficients,
     )
 

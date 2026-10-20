@@ -57,7 +57,18 @@ c1, c2 = st.columns(2)
 
 with c1:
     st.subheader("Classification Report")
-    st.text(result.report)
+    report = result.report_table.rename(
+        index={"0": "Not healthy", "1": "Healthy", "macro avg": "Macro average", "weighted avg": "Weighted average"},
+        columns={"precision": "Precision", "recall": "Recall", "f1-score": "F1", "support": "Days"},
+    )
+    st.dataframe(
+        report, width="stretch",
+        column_config={
+            **{c: st.column_config.NumberColumn(format="%.2f") for c in ["Precision", "Recall", "F1"]},
+            "Days": st.column_config.NumberColumn(format="%d"),
+        },
+    )
+    st.caption("Precision: how often a 'healthy' prediction is right. Recall: how many healthy days are found.")
 
 with c2:
     st.subheader("Confusion Matrix")

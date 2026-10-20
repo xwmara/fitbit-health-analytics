@@ -1,3 +1,5 @@
 # Tools needed only for development and testing
 -r requirements.txt
 pytest==9.1.1
+# Faster, more reliable auto-reload while editing (streamlit run --server.runOnSave true)
+watchdog==6.0.0
