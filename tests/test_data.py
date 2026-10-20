@@ -67,6 +67,14 @@ def test_merge_leaves_sleep_missing_for_days_without_a_record():
     assert pd.isna(merged.loc[1, "TotalMinutesAsleep"])
 
 
+def test_days_with_sleep_keeps_only_real_sleep_records():
+    _, sleep, merged = data.load_data()
+    subset = data.days_with_sleep(merged)
+    assert len(subset) == len(sleep) == 410
+    assert subset["TotalMinutesAsleep"].notna().all()
+    assert subset["Id"].nunique() == 24
+
+
 def test_fill_missing_with_median_fills_only_selected_columns():
     df = pd.DataFrame({"a": [1.0, None, 3.0, 10.0], "b": [None, 2.0, 2.0, 2.0]})
     filled = data.fill_missing_with_median(df, ["a"])

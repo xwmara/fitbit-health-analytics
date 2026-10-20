@@ -49,6 +49,14 @@ def load_data():
 
 daily_activity, sleep_data, df = load_data()
 
+# Models that use sleep work only on days with a real sleep record (see the "Missing values" section)
+df_sleep = data.days_with_sleep(df)
+SLEEP_SUBSET_NOTE = (
+    f"This model uses only the **{len(df_sleep)} days with a sleep record** "
+    f"({df_sleep['Id'].nunique()} of {df['Id'].nunique()} users). Sleep values are not imputed, "
+    "because days without a record count the night as sedentary time."
+)
+
 # --- SESSION STATE ---
 if 'visitor_name' not in st.session_state:
     st.session_state['visitor_name'] = ""
@@ -387,11 +395,12 @@ elif menu == "7. K-Means clustering":
     **Goal:** group users by their behaviour (steps, sleep, calories)
     to identify different segments. We used **k = 3 clusters**.
     """)
+    st.caption(SLEEP_SUBSET_NOTE)
 
     features = ["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes", "TotalMinutesAsleep"]
 
     # Data preparation
-    df_cluster = data.fill_missing_with_median(df, features)
+    df_cluster = df_sleep.copy()
 
     # K-Means model (on standardised data)
     df_cluster["Cluster"] = analysis.kmeans_clusters(df_cluster[features], n_clusters=3)
@@ -410,7 +419,8 @@ elif menu == "7. K-Means clustering":
         st.subheader(" Cluster Profiles")
         st.write("\n".join(
             f"- **Cluster {c}: {cluster_names[c]}** "
-            f"(~{row.TotalSteps:,.0f} steps and {row.VeryActiveMinutes:.0f} very active minutes per day)"
+            f"(~{row.TotalSteps:,.0f} steps, {row.VeryActiveMinutes:.0f} very active minutes "
+            f"and {row.TotalMinutesAsleep / 60:.1f} hours of sleep per day)"
             for c, row in cluster_means.iterrows()
         ))
 
@@ -448,7 +458,7 @@ elif menu == "7. K-Means clustering":
         label_of = {name: c for c, name in cluster_names.items()}
         st.write(f"""
         The organisation can use these segments for:
-        1. **Targeting:** personalised messages for the sedentary group (Cluster {label_of["Sedentary"]}).
+        1. **Targeting:** personalised messages for the least active group (Cluster {label_of["Low activity"]}).
         2. **Retention:** loyalty programmes for the most active users (Cluster {label_of["Very active"]}).
         """)
 
@@ -462,9 +472,10 @@ elif menu == "8. Logistic regression":
     **Goal:** classify each day as 'Healthy lifestyle' (1) or 'Needs improvement' (0).
     A day counts as healthy with at least 8,000 steps, fewer than 1,000 sedentary minutes and at least 7 hours of sleep.
     """)
+    st.caption(SLEEP_SUBSET_NOTE)
 
-    # Data clean-up
-    df_log = data.fill_missing_with_median(df, ["TotalMinutesAsleep"])
+    # The label needs real sleep values, so only days with a sleep record are used
+    df_log = df_sleep.copy()
 
     # Target variable
     df_log["HealthyLifestyle"] = analysis.healthy_lifestyle_label(df_log)
@@ -525,13 +536,13 @@ elif menu == "8. Logistic regression":
 
     with st.expander("📝 Interpreting the Results"):
         st.write(f"""
-        Because healthy days are rare, accuracy alone is misleading: always answering "not healthy"
+        Healthy days are the minority class, so accuracy alone is misleading: always answering "not healthy"
         already scores **{result.baseline_accuracy:.1%}** on this test set, but finds none of the healthy days.
-        The model's accuracy is lower because the balanced class weights make it flag more days as healthy:
-        it finds **{result.recall:.0%}** of them, at the cost of more false alarms.
-        Recall, F1 and ROC AUC show how well the model actually finds healthy days. An ROC AUC of **{result.roc_auc:.2f}** means the model
-        separates the two classes better than chance, but far from perfectly, which is expected for a
-        small dataset of {df_log["Id"].nunique()} users.
+        The model, trained with balanced class weights, finds **{result.recall:.0%}** of them, at the cost of
+        some false alarms (accuracy **{acc:.1%}**).
+        Recall, F1 and ROC AUC show how well the model actually finds healthy days. An ROC AUC of
+        **{result.roc_auc:.2f}** (0.5 = chance, 1.0 = perfect) means the model separates the two classes
+        clearly better than chance, but not perfectly, with only {df_log["Id"].nunique()} users to learn from.
 
         The coefficients are computed on standardised features, so they can be compared: the largest
         positive one, **{importance.iloc[0]['Feature']}**, raises the predicted probability of a healthy day the most.
@@ -547,9 +558,9 @@ elif menu == "9. Multiple regression":
     **Goal:** understand how physical activity and sleep relate to calories burned.
     We use an **OLS (ordinary least squares)** model to estimate the coefficients.
     """)
+    st.caption(SLEEP_SUBSET_NOTE)
 
-    cols = ["Calories", "TotalSteps", "VeryActiveMinutes", "SedentaryMinutes", "TotalMinutesAsleep"]
-    df_reg = data.fill_missing_with_median(df, cols)
+    df_reg = df_sleep.copy()
 
     # Model variables
     features = ["TotalSteps", "VeryActiveMinutes", "SedentaryMinutes", "TotalMinutesAsleep"]

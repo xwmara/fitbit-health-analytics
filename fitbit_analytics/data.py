@@ -52,6 +52,15 @@ def load_data(data_dir=DATA_DIR):
     return daily, sleep, merged
 
 
+def days_with_sleep(df):
+    """Return only the days that have a real sleep record (no imputed sleep values).
+
+    On days without a sleep record the device was usually not worn at night, so the night is
+    counted as sedentary time. Imputing sleep for those days would mix two different situations.
+    """
+    return df.dropna(subset=["TotalMinutesAsleep"]).reset_index(drop=True)
+
+
 def fill_missing_with_median(df, columns=None):
     """Return a copy of `df` where NaNs in `columns` are replaced by each column's median.
 

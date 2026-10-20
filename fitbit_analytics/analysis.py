@@ -87,7 +87,7 @@ def kmeans_clusters(X, n_clusters=3, random_state=42):
     return kmeans.fit_predict(X_scaled)
 
 
-CLUSTER_NAMES = ["Sedentary", "Balanced", "Very active"]
+CLUSTER_NAMES = ["Low activity", "Moderate activity", "Very active"]
 
 
 def name_clusters(cluster_means, by="TotalSteps", names=CLUSTER_NAMES):
