@@ -21,7 +21,7 @@ The app is organised in sections, selectable from the sidebar:
 | Logistic regression | Classifier for a "healthy day" label, without data leakage, tested on unseen users and compared with a majority-class baseline (recall, F1, ROC AUC) |
 | Multiple regression (OLS) | How steps, activity and sleep relate to calories burned |
 | Geographic view | World map built with GeoPandas |
-| Conclusions | Summary of the findings |
+| Conclusions | Key findings computed live from the data, limitations and recommendations |
 
 ## Tech stack
 
