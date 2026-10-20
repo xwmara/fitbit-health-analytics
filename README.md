@@ -5,6 +5,21 @@
 An interactive Streamlit app that explores daily activity and sleep data from Fitbit users and applies
 classic data analysis and machine learning techniques to describe what a healthy lifestyle looks like.
 
+**Live app:** <https://fitbit-health-analytics.streamlit.app/>
+
+![Overview page of the app](docs/images/overview.png)
+
+<table>
+  <tr>
+    <td><img src="docs/images/clustering.png" alt="Clustering page: three behaviour profiles"></td>
+    <td><img src="docs/images/logistic.png" alt="Healthy-day classifier page: metrics and confusion matrix"></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Clustering: three behaviour profiles</em></td>
+    <td align="center"><em>Healthy-day classifier, tested on unseen users</em></td>
+  </tr>
+</table>
+
 ## Key findings
 
 - **Missing sleep data is not random.** 56% of the days have no sleep record. On those days users log about
@@ -123,6 +138,7 @@ fitbit-health-analytics/
 │   └── charts.py          # Shared colour palette and chart style
 ├── data/                  # Fitbit CSV files
 ├── tests/                 # pytest test suite
+├── docs/images/           # Screenshots used in this README
 ├── requirements.txt       # Pinned Python dependencies
 ├── requirements-dev.txt   # Extra tools for development (pytest)
 ├── pyproject.toml         # pytest configuration
