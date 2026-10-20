@@ -7,13 +7,12 @@ from app_pages.common import load_data
 
 daily_activity, sleep_data, df, df_sleep = load_data()
 
-st.title("Encoding and Scaling the Data")
-
-st.info("""
-This step prepares the data for the machine learning models (K-Means, regression).
-Distance-based algorithms such as K-Means need scaling so that variables with large values (steps)
-do not dominate variables with smaller values (calories).
-""")
+st.title("Encoding and scaling")
+st.markdown(
+    "Two preparation steps for the models: turning a text category into numbers (**label encoding**) "
+    "and putting all variables on the same scale (**standardisation**). Without scaling, a distance-based "
+    "method such as K-Means would be dominated by steps, simply because step counts are much larger numbers."
+)
 
 # Quick clean-up to avoid errors during scaling
 df_prep = data.fill_missing_with_median(df, ["TotalMinutesAsleep"])

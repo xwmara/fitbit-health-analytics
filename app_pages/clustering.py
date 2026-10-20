@@ -9,12 +9,12 @@ from app_pages.common import load_data, CLUSTER_FEATURES, sleep_subset_note
 
 daily_activity, sleep_data, df, df_sleep = load_data()
 
-st.title("User Segmentation (K-Means Clustering)")
-
-st.info("""
-**Goal:** group users by their behaviour (steps, sleep, calories)
-to identify different segments. We used **k = 3 clusters**.
-""")
+st.title("Clustering")
+st.markdown(
+    "**Which behaviour profiles exist?** K-Means groups the days (one user, one day) by steps, calories, "
+    "sedentary time, very active minutes and sleep into **3 clusters**. Each cluster is named after its "
+    "average step count."
+)
 st.caption(sleep_subset_note(df, df_sleep))
 
 features = CLUSTER_FEATURES
@@ -77,7 +77,7 @@ ax.grid(True, linestyle='--', alpha=0.6)
 
 st.pyplot(fig)
 
-with st.expander("📝 Business Interpretation"):
+with st.expander("Business interpretation"):
     label_of = {name: c for c, name in cluster_names.items()}
     st.write(f"""
     The organisation can use these segments for:

@@ -6,14 +6,14 @@ from app_pages.common import load_data
 
 daily_activity, sleep_data, df, df_sleep = load_data()
 
-st.title("Exploratory Data Analysis (EDA)")
+st.title("Data exploration")
+st.markdown(
+    f"Two files from the same users: one row per user and day for **activity** "
+    f"({len(daily_activity)} rows) and one row per user and night for **sleep** ({len(sleep_data)} rows). "
+    "They are joined into a single table with one row per user and day."
+)
 
-st.markdown("""
-In this step we look at the structure of the datasets to understand their size,
-the variable types and how the information is organised.
-""")
-
-tab1, tab2, tab3 = st.tabs(["📊 Daily Activity", "😴 Sleep Tracking", "🔗 Merged Data (Join)"])
+tab1, tab2, tab3 = st.tabs(["Daily activity", "Sleep", "Merged table"])
 
 with tab1:
     st.subheader("Daily Activity Structure")
@@ -43,5 +43,6 @@ with tab2:
 
 with tab3:
     st.subheader("Merged Dataset (Master Table)")
-    st.info("The tables were combined with a **left join** on the composite key `[Id, ActivityDate]`.")
+    st.caption("The tables are combined with a **left join** on `[Id, date]`, so every activity day is kept; "
+               "days without a sleep record get empty sleep columns.")
     st.dataframe(df.head(10), width="stretch")

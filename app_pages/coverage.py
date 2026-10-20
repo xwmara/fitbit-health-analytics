@@ -12,11 +12,12 @@ from app_pages.common import load_data
 
 daily_activity, sleep_data, df, df_sleep = load_data()
 
-st.title("Data Coverage: Who Wears the Device, and When")
-st.write("""
-Each row is a user and each column a day. The colour shows what was recorded that day. This view
-explains why so many sleep values are missing, and why the models use only days with a sleep record.
-""")
+st.title("Data coverage")
+st.markdown(
+    "**Who wears the device, and when?** Each row is a user and each column a day; the colour shows what "
+    "was recorded. This view explains why so many sleep values are missing, and why the models use only "
+    "days with a sleep record."
+)
 
 matrix = analysis.coverage_matrix(df)
 per_user = analysis.coverage_by_user(df)

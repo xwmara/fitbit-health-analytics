@@ -8,12 +8,11 @@ from app_pages.common import load_data
 
 daily_activity, sleep_data, df, df_sleep = load_data()
 
-st.title("Outlier Detection")
-
-st.markdown("""
-Detecting outliers with the **IQR (interquartile range)** method helps us isolate records that
-may be sensor errors or unusual behaviour that could distort the averages.
-""")
+st.title("Outliers")
+st.markdown(
+    "Unusually high or low values can be sensor errors or genuinely unusual days, and both can distort "
+    "averages. The **IQR rule** flags values more than 1.5 × IQR below the first quartile or above the third."
+)
 
 col = st.selectbox(
     "Select a variable to analyse:",
@@ -43,11 +42,13 @@ with ol_graph:
 
 with ol_stats:
     st.write("**Detailed statistics:**")
-    st.write(f"🔹 **Q1 (25%):** {q1:.2f}")
-    st.write(f"🔹 **Q3 (75%):** {q3:.2f}")
-    st.write(f"🔹 **IQR:** {iqr:.2f}")
+    st.write(f"- **Q1 (25%):** {q1:.2f}\n- **Q3 (75%):** {q3:.2f}\n- **IQR:** {iqr:.2f}")
     st.divider()
     st.metric("Total Outliers", len(outliers))
+
+st.write(
+    f"Values above **{upper:.2f}** are upper outliers and values below **{lower:.2f}** are lower outliers."
+)
 
 # --- OUTLIER TABLE ---
 if len(outliers) > 0:
@@ -55,7 +56,4 @@ if len(outliers) > 0:
         st.write(f"These values fall outside the interval [{lower:.2f}, {upper:.2f}]")
         st.dataframe(outliers[["Id", col]].sort_values(by=col, ascending=False))
 else:
-    st.success("No outliers were detected for this variable.")
-
-st.info(
-    f"**Interpretation:** values above {upper:.2f} are upper outliers, and values below {lower:.2f} are lower outliers.")
+    st.caption("No outliers were detected for this variable.")

@@ -7,7 +7,11 @@ from app_pages.common import load_data
 
 daily_activity, sleep_data, df, df_sleep = load_data()
 
-st.title("Descriptive Statistics and Group Analysis")
+st.title("Statistics")
+st.markdown(
+    "Descriptive statistics for the main variables, averages per user, and how activity changes "
+    "across the week."
+)
 
 # --- LEVEL 1: KEY METRICS ---
 st.subheader("Key Indicators (Overall)")
@@ -28,7 +32,7 @@ st.divider()
 col_a, col_b = st.columns(2)
 
 with col_a:
-    st.subheader(" Descriptive Statistics")
+    st.subheader("Descriptive Statistics")
     st.write("Numeric summary of the main variables:")
     st.dataframe(df[["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes"]].describe(),
                  width="stretch")

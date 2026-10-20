@@ -7,12 +7,12 @@ from app_pages.common import load_data
 
 daily_activity, sleep_data, df, df_sleep = load_data()
 
-st.title("Handling Missing Values")
-
-st.markdown("""
-Finding missing values is an essential EDA step. Left untreated, they can cause errors in
-regression or clustering models. We used the **median** for imputation because it is robust to outliers.
-""")
+st.title("Missing values")
+st.markdown(
+    f"Only the sleep columns have gaps, but they are large: **{df['TotalMinutesAsleep'].isna().mean():.0%} "
+    "of the days have no sleep record**. This page shows the standard fix (median imputation) and then "
+    "why it would be the wrong choice for this data."
+)
 
 # Two columns to compare "before" and "after"
 col_before, col_after = st.columns(2)
@@ -22,7 +22,6 @@ with col_before:
     missing_counts = df.isnull().sum()
     # Show only the columns that actually have missing values
     st.dataframe(missing_counts[missing_counts > 0], width="stretch")
-    st.warning(f" {df['TotalMinutesAsleep'].isna().mean():.0%} of the days have no sleep record.")
 
 with col_after:
     st.subheader("2. After imputation")
@@ -33,7 +32,7 @@ with col_after:
     # Check again
     after_counts = df_clean.isnull().sum()
     st.dataframe(after_counts[after_counts > 0], width="stretch")
-    st.success(" All numeric values have been filled in.")
+    st.caption("Every numeric column is complete after filling the gaps with the column median.")
 
 st.divider()
 
@@ -45,7 +44,7 @@ if missing_counts.sum() > 0:
 else:
     st.write("No missing values were found in the dataset.")
 
-with st.expander("📝 Why the median?"):
+with st.expander("Why the median?"):
     st.write("""
     We chose **median imputation** over the mean because Fitbit data (such as steps or calories)
     tends to be skewed. In this context the median gives a more central and more stable estimate.

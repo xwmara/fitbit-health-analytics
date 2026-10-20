@@ -9,12 +9,12 @@ from app_pages.common import load_data, LOGISTIC_FEATURES, sleep_subset_note
 
 daily_activity, sleep_data, df, df_sleep = load_data()
 
-st.title("Logistic Regression: Predicting a Healthy Lifestyle")
-
-st.info("""
-**Goal:** classify each day as 'Healthy lifestyle' (1) or 'Needs improvement' (0).
-A day counts as healthy with at least 8,000 steps, fewer than 1,000 sedentary minutes and at least 7 hours of sleep.
-""")
+st.title("Healthy-day classifier")
+st.markdown(
+    "**Can we flag healthy days?** A day counts as *healthy* with at least 8,000 steps, fewer than "
+    "1,000 sedentary minutes and at least 7 hours of sleep. A logistic regression tries to recognise "
+    "these days without being shown steps, sedentary time or sleep."
+)
 st.caption(sleep_subset_note(df, df_sleep))
 
 # The label needs real sleep values, so only days with a sleep record are used
@@ -30,7 +30,7 @@ X = data.fill_missing_with_median(df_log[features], features)
 
 y = df_log["HealthyLifestyle"]
 
-with st.expander("🔍 How the model is set up", expanded=True):
+with st.expander("How the model is set up", expanded=True):
     st.write(f"""
     - **Features:** {", ".join(features)}. The variables used to define the label (steps, sedentary
       minutes, sleep) and distance, which is almost the same as steps, are left out. Otherwise the
@@ -78,7 +78,7 @@ st.subheader("Factor Importance for a Healthy Lifestyle")
 importance = result.coefficients
 st.bar_chart(data=importance, x='Feature', y='Importance', color=charts.PRIMARY)
 
-with st.expander("📝 Interpreting the Results"):
+with st.expander("Interpreting the results"):
     st.write(f"""
     Healthy days are the minority class, so accuracy alone is misleading: always answering "not healthy"
     already scores **{result.baseline_accuracy:.1%}** on this test set, but finds none of the healthy days.

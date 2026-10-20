@@ -9,12 +9,11 @@ from app_pages.common import load_data, OLS_FEATURES, sleep_subset_note
 
 daily_activity, sleep_data, df, df_sleep = load_data()
 
-st.title("Multiple Regression: What Drives Calories Burned")
-
-st.info("""
-**Goal:** understand how physical activity and sleep relate to calories burned.
-We use an **OLS (ordinary least squares)** model to estimate the coefficients.
-""")
+st.title("Calories regression")
+st.markdown(
+    "**What drives calories burned?** A multiple linear regression (OLS) relates daily calories to steps, "
+    "very active minutes, sedentary time and sleep, and shows which of them matters most."
+)
 st.caption(sleep_subset_note(df, df_sleep))
 
 df_reg = df_sleep.copy()
@@ -35,8 +34,8 @@ with col_r2:
     st.metric("Adj. R-squared", f"{model.rsquared_adj:.3f}")
 with col_r3:
     # Overall significance of the model (F-test)
-    status = "Valid" if model.f_pvalue < 0.05 else "Invalid"
-    st.metric("Model Status (p-value)", status)
+    p_text = "< 0.001" if model.f_pvalue < 0.001 else f"{model.f_pvalue:.3f}"
+    st.metric("F-test p-value", p_text, help="Below 0.05: the variables jointly explain calories better than no model")
 
 st.divider()
 
