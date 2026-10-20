@@ -1,1 +1,81 @@
-# Proiect_Pachete_Software_Fitbit
+# Fitbit Health Analytics
+
+An interactive Streamlit app that explores daily activity and sleep data from Fitbit users and applies
+classic data analysis and machine learning techniques to describe what a healthy lifestyle looks like.
+
+> **Status:** work in progress. The app started as a university project and is being refactored into a
+> portfolio project (modular code, tests, English UI, public deployment).
+
+## What the app does
+
+The app is organised in sections, selectable from the sidebar:
+
+| Section | What it shows |
+| --- | --- |
+| Data exploration | Structure of the two datasets and the merged table |
+| Missing values | Missing-value counts before and after median imputation |
+| Outliers | IQR-based outlier detection with a boxplot for a chosen variable |
+| Statistics and aggregations | Descriptive statistics, per-user averages, average steps by weekday |
+| Encoding and scaling | Lifestyle categories from step counts, label encoding, standardisation |
+| K-Means clustering | Segmentation into 3 activity profiles, steps vs. calories scatter plot |
+| Logistic regression | Classifier for a "healthy lifestyle" label, accuracy and confusion matrix |
+| Multiple regression (OLS) | How steps, activity and sleep relate to calories burned |
+| Geographic view | World map built with GeoPandas |
+| Conclusions | Summary of the findings |
+
+## Tech stack
+
+Python, Streamlit, pandas, NumPy, scikit-learn, statsmodels, Matplotlib, seaborn, GeoPandas.
+
+## Dataset
+
+The data comes from the public **Crowd-sourced Fitbit datasets 03.12.2016–05.12.2016**
+(Furberg, Brinton, Keating & Ortiz, 2016), published on Zenodo under the
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) license:
+<https://doi.org/10.5281/zenodo.53894>. It is also widely known as the
+[FitBit Fitness Tracker Data](https://www.kaggle.com/datasets/arashnic/fitbit) dataset on Kaggle.
+
+This project uses two of its files, stored in [`data/`](data/):
+
+- `dailyActivity_merged.csv`: 940 daily records from 33 users (steps, distance, active and sedentary minutes, calories)
+- `sleepDay_merged.csv`: 413 daily sleep records from 24 users (minutes asleep, time in bed)
+
+The data covers one month (April–May 2016) from users who volunteered through an online survey, so it is
+a small, self-selected sample and the results should not be generalised to the wider population.
+
+## Run locally
+
+Requirements: Python 3.11 or newer.
+
+```bash
+git clone https://github.com/xwmara/fitbit-health-analytics.git
+cd fitbit-health-analytics
+
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
+
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+The app opens at <http://localhost:8501>. Run it from the repository root, because the data files are
+loaded with relative paths. The geographic section downloads a GeoJSON file at runtime and needs an
+internet connection.
+
+## Project structure
+
+```
+fitbit-health-analytics/
+├── app.py             # Streamlit app
+├── data/              # Fitbit CSV files
+├── requirements.txt   # Pinned Python dependencies
+└── README.md
+```
+
+## Background
+
+Originally built as a university project for the Software Packages course at the Bucharest University
+of Economic Studies (ASE), Faculty of Cybernetics, Statistics and Economic Informatics.
