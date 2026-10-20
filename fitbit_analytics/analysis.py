@@ -79,6 +79,21 @@ def kmeans_clusters(X, n_clusters=3, random_state=42):
     return kmeans.fit_predict(X_scaled)
 
 
+CLUSTER_NAMES = ["Sedentary", "Balanced", "Very active"]
+
+
+def name_clusters(cluster_means, by="TotalSteps", names=CLUSTER_NAMES):
+    """Map each cluster label to a descriptive name, ranking clusters by their mean of `by`.
+
+    K-Means numbers its clusters arbitrarily, so names must come from the cluster profiles:
+    the cluster with the fewest average steps gets the first name, and so on.
+    """
+    if len(cluster_means) != len(names):
+        raise ValueError(f"Expected {len(names)} clusters, got {len(cluster_means)}")
+    ranked = cluster_means[by].sort_values().index
+    return dict(zip(ranked, names))
+
+
 # --- Logistic regression ---
 
 def healthy_lifestyle_label(df):

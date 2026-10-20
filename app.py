@@ -396,6 +396,10 @@ elif menu == "7. K-Means clustering":
     # K-Means model (on standardised data)
     df_cluster["Cluster"] = analysis.kmeans_clusters(df_cluster[features], n_clusters=3)
 
+    # Name the clusters from their average steps (K-Means numbers them arbitrarily)
+    cluster_means = df_cluster.groupby("Cluster")[features].mean()
+    cluster_names = analysis.name_clusters(cluster_means)
+
     # --- RESULTS ---
     col_cl1, col_cl2 = st.columns([1, 2])
 
@@ -404,16 +408,16 @@ elif menu == "7. K-Means clustering":
         st.write(df_cluster["Cluster"].value_counts())
 
         st.subheader(" Cluster Profiles")
-        st.write("""
-        - **Cluster 0:** balanced users.
-        - **Cluster 1:** very active users (athletes).
-        - **Cluster 2:** sedentary users.
-        """)
+        st.write("\n".join(
+            f"- **Cluster {c}: {cluster_names[c]}** "
+            f"(~{row.TotalSteps:,.0f} steps and {row.VeryActiveMinutes:.0f} very active minutes per day)"
+            for c, row in cluster_means.iterrows()
+        ))
 
     with col_cl2:
         st.subheader(" Cluster Comparison")
-        cluster_means = df_cluster.groupby("Cluster")[features].mean()
-        st.dataframe(cluster_means, use_container_width=True)
+        st.dataframe(cluster_means.assign(Profile=cluster_means.index.map(cluster_names)),
+                     use_container_width=True)
 
     st.divider()
 
@@ -441,10 +445,11 @@ elif menu == "7. K-Means clustering":
     st.pyplot(fig)
 
     with st.expander("📝 Business Interpretation"):
-        st.write("""
+        label_of = {name: c for c, name in cluster_names.items()}
+        st.write(f"""
         The organisation can use these segments for:
-        1. **Targeting:** personalised messages for the sedentary group.
-        2. **Retention:** loyalty programmes for the most active users (Cluster 1).
+        1. **Targeting:** personalised messages for the sedentary group (Cluster {label_of["Sedentary"]}).
+        2. **Retention:** loyalty programmes for the most active users (Cluster {label_of["Very active"]}).
         """)
 
 # -----------------------------

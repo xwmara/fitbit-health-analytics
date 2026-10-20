@@ -88,6 +88,18 @@ def test_kmeans_clusters_is_reproducible():
     assert (analysis.kmeans_clusters(X) == analysis.kmeans_clusters(X)).all()
 
 
+def test_name_clusters_ranks_by_average_steps():
+    # Cluster labels deliberately out of order: label 2 has the fewest steps
+    means = pd.DataFrame({"TotalSteps": [8000, 14000, 4000]}, index=[0, 1, 2])
+    assert analysis.name_clusters(means) == {2: "Sedentary", 0: "Balanced", 1: "Very active"}
+
+
+def test_name_clusters_rejects_wrong_number_of_clusters():
+    means = pd.DataFrame({"TotalSteps": [4000, 8000]})
+    with pytest.raises(ValueError):
+        analysis.name_clusters(means)
+
+
 # --- Logistic regression ---
 
 def test_healthy_lifestyle_label_thresholds():
