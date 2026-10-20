@@ -5,7 +5,9 @@ import seaborn as sns
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 
-from fitbit_analytics import analysis, data
+from fitbit_analytics import analysis, charts, data
+
+charts.apply_style()  # one Matplotlib style for every chart in the app
 
 AUTHOR_NAME = "Mara-Livia Popa"
 GITHUB_URL = "https://github.com/xwmara"
@@ -259,8 +261,10 @@ elif menu == "4. Outliers":
         fig, ax = plt.subplots(figsize=(8, 4))
         # Fitbit teal for the box
         ax.boxplot(series, orientation="horizontal", patch_artist=True,
-                   boxprops=dict(facecolor='#00B0B9', color='black'),
-                   medianprops=dict(color='orange'))
+                   boxprops=dict(facecolor=charts.LIGHT_TEAL, color=charts.PRIMARY),
+                   whiskerprops=dict(color=charts.PRIMARY), capprops=dict(color=charts.PRIMARY),
+                   flierprops=dict(markeredgecolor=charts.ACCENT),
+                   medianprops=dict(color=charts.ACCENT, linewidth=2))
         ax.set_title(f"Boxplot: distribution of {col}")
         st.pyplot(fig)
 
@@ -328,7 +332,7 @@ elif menu == "5. Statistics and aggregations":
     grouped_day = analysis.average_steps_by_weekday(daily_activity)
 
     # st.bar_chart gives an interactive chart
-    st.bar_chart(data=grouped_day, x="DayOfWeek", y="TotalSteps", color="#00B0B9")
+    st.bar_chart(data=grouped_day, x="DayOfWeek", y="TotalSteps", color=charts.PRIMARY)
 
     with st.expander("Show the data behind the chart"):
         st.table(grouped_day)
@@ -436,9 +440,12 @@ elif menu == "7. K-Means clustering":
         df_cluster["TotalSteps"],
         df_cluster["Calories"],
         c=df_cluster["Cluster"],
-        cmap='viridis',
-        s=50,
-        alpha=0.7
+        # Each cluster gets its profile's fixed colour (cluster ids are 0, 1, 2)
+        cmap=ListedColormap([charts.CLUSTER_COLORS[cluster_names[c]] for c in sorted(cluster_names)]),
+        s=40,
+        alpha=0.75,
+        edgecolors="white",
+        linewidths=0.5,
     )
 
     # Legend
@@ -519,7 +526,8 @@ elif menu == "8. Logistic regression":
 
         # Confusion matrix heatmap
         fig, ax = plt.subplots(figsize=(4, 3))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax, cbar=False)
+        sns.heatmap(cm, annot=True, fmt='d', cmap=sns.light_palette(charts.PRIMARY, as_cmap=True),
+                    ax=ax, cbar=False, linewidths=1, linecolor="white")
         ax.set_xlabel('Predicted')
         ax.set_ylabel('Actual')
         st.pyplot(fig)
@@ -529,7 +537,7 @@ elif menu == "8. Logistic regression":
     # --- FEATURE IMPORTANCE ---
     st.subheader("Factor Importance for a Healthy Lifestyle")
     importance = result.coefficients
-    st.bar_chart(data=importance, x='Feature', y='Importance', color="#00B0B9")
+    st.bar_chart(data=importance, x='Feature', y='Importance', color=charts.PRIMARY)
 
     with st.expander("📝 Interpreting the Results"):
         st.write(f"""
@@ -594,8 +602,8 @@ elif menu == "9. Multiple regression":
 
         fig, ax = plt.subplots(figsize=(10, 5))
         sns.regplot(data=df_reg, x="Calories", y="Predictions",
-                    scatter_kws={'alpha': 0.3, 'color': 'gray'},
-                    line_kws={'color': '#00B0B9'})
+                    scatter_kws={'alpha': 0.4, 'color': charts.GREY, 's': 18},
+                    line_kws={'color': charts.PRIMARY, 'linewidth': 2})
         ax.set_title("Regression model accuracy")
         st.pyplot(fig)
 
@@ -644,7 +652,7 @@ elif menu == "10. Data coverage":
     k4.metric("Days with sleep data", f"{(status == 3).mean():.0%}")
 
     # Heatmap with one colour per coverage status
-    colors = ["#e5e7eb", "#f4a261", "#a7d8de", "#00B0B9"]
+    colors = [charts.LIGHT_GREY, charts.ACCENT, charts.LIGHT_TEAL, charts.PRIMARY]
     fig, ax = plt.subplots(figsize=(12, 9))
     sns.heatmap(
         matrix,

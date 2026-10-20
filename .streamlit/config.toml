@@ -1,3 +1,25 @@
 [theme]
-# Fitbit teal as the accent colour for buttons, sliders and charts
-primaryColor = "#00B0B9"
+base = "light"
+
+# Colours: deep teal accent on a white page, light grey sidebar, dark slate text
+primaryColor = "#0E7C86"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F4F5F7"
+textColor = "#1F2933"
+linkColor = "#0E7C86"
+borderColor = "#E3E6EA"
+showWidgetBorder = true
+baseRadius = "6px"
+
+# Typography: a serif for headings gives the app a report-like look
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+headingFont = "'Source Serif 4':https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&display=swap"
+headingFontWeights = [700, 600]
+baseFontSize = 15
+metricValueFontWeight = 600
+
+# Default colours for Streamlit's built-in charts (same palette as fitbit_analytics/charts.py)
+chartCategoricalColors = ["#0E7C86", "#E76F51", "#E9A23B", "#5B7DB1", "#8D99AE"]
+
+[theme.sidebar]
+backgroundColor = "#F4F5F7"
