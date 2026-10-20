@@ -11,6 +11,8 @@ import statsmodels.api as sm
 import seaborn as sns
 import geopandas as gpd
 
+from fitbit_analytics import data
+
 
 #  Configurația paginii
 st.set_page_config(page_title="Proiect Fitbit", layout="wide")
@@ -45,25 +47,8 @@ st.write("Aplicație Streamlit realizată pe baza datelor Fitbit")
 # -----------------------------
 @st.cache_data
 def load_data():
-    daily = pd.read_csv("data/dailyActivity_merged.csv")
-    sleep = pd.read_csv("data/sleepDay_merged.csv")
-
-    daily["ActivityDate"] = pd.to_datetime(daily["ActivityDate"])
-    sleep["SleepDay"] = pd.to_datetime(sleep["SleepDay"])
-
-    # păstrăm doar data pentru join
-    sleep["ActivityDate"] = sleep["SleepDay"].dt.date
-    daily["ActivityDateOnly"] = daily["ActivityDate"].dt.date
-
-    df = pd.merge(
-        daily,
-        sleep[["Id", "ActivityDate", "TotalSleepRecords", "TotalMinutesAsleep", "TotalTimeInBed"]],
-        left_on=["Id", "ActivityDateOnly"],
-        right_on=["Id", "ActivityDate"],
-        how="left"
-    )
-
-    return daily, sleep, df
+    # Cached so the CSV files are read only once per session
+    return data.load_data()
 
 
 daily_activity, sleep_data, df = load_data()
@@ -222,10 +207,7 @@ elif menu == "3. Valori lipsă":
         st.subheader("2. După completare")
 
         # Realizăm curățarea
-        df_clean = df.copy()
-        numeric_cols = df_clean.select_dtypes(include=[np.number]).columns
-        for col in numeric_cols:
-            df_clean[col] = df_clean[col].fillna(df_clean[col].median())
+        df_clean = data.fill_missing_with_median(df)
 
         # Verificăm din nou
         after_counts = df_clean.isnull().sum()
@@ -371,9 +353,8 @@ elif menu == "6. Codificare și scalare":
     să nu domine variabilele cu unități mici (Calorii).
     """)
 
-    df_prep = df.copy()
     # Curățare rapidă pentru a evita erori la scalare
-    df_prep["TotalMinutesAsleep"] = df_prep["TotalMinutesAsleep"].fillna(df_prep["TotalMinutesAsleep"].median())
+    df_prep = data.fill_missing_with_median(df, ["TotalMinutesAsleep"])
 
     # --- 1. CODIFICARE (Label Encoding) ---
     st.subheader("1. Codificarea Variabilelor Categoriale")
@@ -407,11 +388,8 @@ elif menu == "6. Codificare și scalare":
     st.write("Transformăm datele pentru a avea media 0 și deviația standard 1.")
 
     features = ["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes", "TotalMinutesAsleep"]
-    X = df_prep[features].copy()
-
     # Asigurăm completarea tuturor valorilor nule înainte de scalare
-    for col in features:
-        X[col] = X[col].fillna(X[col].median())
+    X = data.fill_missing_with_median(df_prep[features], features)
 
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
@@ -437,12 +415,10 @@ elif menu == "7. Clusterizare KMeans":
     pentru a identifica segmente de piață diferite. Am utilizat **k=3 clustere**.
     """)
 
-    df_cluster = df.copy()
     features = ["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes", "TotalMinutesAsleep"]
 
     # Pregătire date
-    for col in features:
-        df_cluster[col] = df_cluster[col].fillna(df_cluster[col].median())
+    df_cluster = data.fill_missing_with_median(df, features)
 
     X = df_cluster[features]
     scaler = StandardScaler()
@@ -514,9 +490,8 @@ elif menu == "8. Regresie logistică":
     Criteriu sănătos: >8000 pași, <1000 min. sedentare și >7 ore de somn.
     """)
 
-    df_log = df.copy()
     # Curățare date
-    df_log["TotalMinutesAsleep"] = df_log["TotalMinutesAsleep"].fillna(df_log["TotalMinutesAsleep"].median())
+    df_log = data.fill_missing_with_median(df, ["TotalMinutesAsleep"])
 
     # Creare variabilă target
     df_log["HealthyLifestyle"] = np.where(
@@ -527,9 +502,7 @@ elif menu == "8. Regresie logistică":
     )
 
     features = ["Calories", "SedentaryMinutes", "VeryActiveMinutes", "TotalMinutesAsleep", "TotalDistance"]
-    X = df_log[features].copy()
-    for col in features:
-        X[col] = X[col].fillna(X[col].median())
+    X = data.fill_missing_with_median(df_log[features], features)
 
     y = df_log["HealthyLifestyle"]
 
@@ -591,10 +564,8 @@ elif menu == "9. Regresie multiplă":
     Folosim modelul **OLS (Ordinary Least Squares)** pentru a determina coeficienții de impact.
     """)
 
-    df_reg = df.copy()
     cols = ["Calories", "TotalSteps", "VeryActiveMinutes", "SedentaryMinutes", "TotalMinutesAsleep"]
-    for col in cols:
-        df_reg[col] = df_reg[col].fillna(df_reg[col].median())
+    df_reg = data.fill_missing_with_median(df, cols)
 
     # Definim variabilele
     features = ["TotalSteps", "VeryActiveMinutes", "SedentaryMinutes", "TotalMinutesAsleep"]
