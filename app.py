@@ -10,7 +10,6 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 import statsmodels.api as sm
 import seaborn as sns
 import geopandas as gpd
-import geodatasets
 
 
 #  Configurația paginii
@@ -561,8 +560,6 @@ elif menu == "8. Regresie logistică":
 
         # Vizualizare grafică a matricei de confuzie
         fig, ax = plt.subplots(figsize=(4, 3))
-        import seaborn as sns
-
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax, cbar=False)
         ax.set_xlabel('Predicție')
         ax.set_ylabel('Realitate')
