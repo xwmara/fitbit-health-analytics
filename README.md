@@ -1,5 +1,7 @@
 # Fitbit Health Analytics
 
+[![Tests](https://github.com/xwmara/fitbit-health-analytics/actions/workflows/tests.yml/badge.svg)](https://github.com/xwmara/fitbit-health-analytics/actions/workflows/tests.yml)
+
 An interactive Streamlit app that explores daily activity and sleep data from Fitbit users and applies
 classic data analysis and machine learning techniques to describe what a healthy lifestyle looks like.
 
@@ -76,7 +78,7 @@ pytest
 ```
 
 The tests cover data loading and merging, the analysis functions, and a smoke test that renders every
-section of the app.
+section of the app. They also run automatically on GitHub Actions for every push to `main`.
 
 ## Project structure
 
@@ -84,6 +86,7 @@ section of the app.
 fitbit-health-analytics/
 ├── app.py                 # Streamlit app (user interface only)
 ├── .streamlit/config.toml # Streamlit theme
+├── .github/workflows/     # GitHub Actions: run the tests on every push
 ├── fitbit_analytics/
 │   ├── data.py            # Loading, merging and cleaning the CSV files
 │   └── analysis.py        # Outliers, encoding, scaling, clustering and regression models
