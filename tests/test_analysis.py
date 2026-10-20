@@ -52,6 +52,38 @@ def test_compare_days_by_sleep_record():
     assert summary.loc["Without sleep record", "SedentaryMinutes"] == 1250
 
 
+# --- Data coverage ---
+
+@pytest.fixture
+def coverage_df():
+    dates = pd.to_datetime(["2016-04-12", "2016-04-13", "2016-04-14"]).date
+    return pd.DataFrame({
+        "Id": [1, 1, 1, 2, 2],
+        "ActivityDateOnly": [dates[0], dates[1], dates[2], dates[0], dates[2]],  # user 2 misses day 2
+        "TotalSteps": [8000, 0, 5000, 3000, 6000],
+        "SedentaryMinutes": [700, 1440, 900, 1200, 1100],
+        "TotalMinutesAsleep": [420, None, None, None, None],
+    })
+
+
+def test_day_coverage_status(coverage_df):
+    # sleep record -> 3, not worn -> 1, activity only -> 2
+    assert analysis.day_coverage_status(coverage_df).tolist() == [3, 1, 2, 2, 2]
+
+
+def test_coverage_matrix_fills_missing_days_and_sorts_users(coverage_df):
+    matrix = analysis.coverage_matrix(coverage_df)
+    assert matrix.shape == (2, 3)
+    assert matrix.index.tolist() == [1, 2]  # user 1 has a sleep record, so comes first
+    assert matrix.loc[2].tolist() == [2, 0, 2]  # the missing day is 0 = "No record"
+
+
+def test_coverage_by_user(coverage_df):
+    summary = analysis.coverage_by_user(coverage_df)
+    assert summary.loc[1].tolist() == [3, 1, 1, pytest.approx(1 / 3)]
+    assert summary.loc[2, "NightsWithSleep"] == 0
+
+
 # --- Encoding and scaling ---
 
 @pytest.mark.parametrize("steps, expected", [

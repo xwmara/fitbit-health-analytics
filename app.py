@@ -2,7 +2,8 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import geopandas as gpd
+from matplotlib.colors import ListedColormap
+from matplotlib.patches import Patch
 
 from fitbit_analytics import analysis, data
 
@@ -108,7 +109,7 @@ menu = st.sidebar.selectbox(
         "7. K-Means clustering",
         "8. Logistic regression",
         "9. Multiple regression",
-        "10. Geographic analysis",
+        "10. Data coverage",
         "11. Conclusions"
     ]
 )
@@ -657,40 +658,56 @@ elif menu == "9. Multiple regression":
         """)
 
 # -----------------------------
-# 10. GEOGRAPHIC ANALYSIS
+# 10. DATA COVERAGE
 # -----------------------------
-elif menu == "10. Geographic analysis":
-    st.header("Geographic Analysis")
-    st.write("A view of the users' global coverage.")
+elif menu == "10. Data coverage":
+    st.header("Data Coverage: Who Wears the Device, and When")
+    st.write("""
+    Each row is a user and each column a day. The colour shows what was recorded that day. This view
+    explains why so many sleep values are missing, and why the models use only days with a sleep record.
+    """)
 
-    col_map1, col_map2 = st.columns([3, 1])
+    matrix = analysis.coverage_matrix(df)
+    per_user = analysis.coverage_by_user(df)
+    status = analysis.day_coverage_status(df)
 
-    with col_map1:
-        st.markdown("""
-            This view uses **GeoPandas** to show the global presence of
-            Fitbit users. The organisation collects data from many regions to understand
-            how geographic factors influence lifestyle.
-            """)
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Users with no sleep record", int((per_user["NightsWithSleep"] == 0).sum()))
+    k2.metric("Users with sleep on ≥ 80% of nights", int((per_user["SleepCoverage"] >= 0.8).sum()))
+    k3.metric("Days not worn", int((status == 1).sum()), help="0 steps and 24 hours of sedentary time")
+    k4.metric("Days with sleep data", f"{(status == 3).mean():.0%}")
 
-    with col_map2:
-        st.info("**Data source:** GeoJSON World Boundaries")
-        st.metric("Regions Analysed", "Global")
+    # Heatmap with one colour per coverage status
+    colors = ["#e5e7eb", "#f4a261", "#a7d8de", "#00B0B9"]
+    fig, ax = plt.subplots(figsize=(12, 9))
+    sns.heatmap(
+        matrix,
+        cmap=ListedColormap(colors),
+        vmin=-0.5, vmax=3.5,
+        linewidths=0.5, linecolor="white",
+        cbar=False,
+        ax=ax,
+    )
+    ax.set_xticks(np.arange(len(matrix.columns))[::3] + 0.5)
+    ax.set_xticklabels([d.strftime("%b %d") for d in matrix.columns[::3]], rotation=45, ha="right")
+    ax.set_yticks(np.arange(len(matrix.index)) + 0.5)
+    ax.set_yticklabels(matrix.index.astype(str), fontsize=8)
+    ax.set_xlabel("Date")
+    ax.set_ylabel("User Id")
+    ax.legend(
+        handles=[Patch(color=c, label=analysis.COVERAGE_LABELS[code]) for code, c in enumerate(colors)],
+        loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=4, frameon=False,
+    )
+    st.pyplot(fig)
 
-    try:
-        url = "https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson"
-        world = gpd.read_file(url)
+    st.write("""
+    **What this shows:** most users wear the device during the day, but only some of them wear it at night.
+    Sleep data depends on the user's habits rather than on chance, so filling in the missing nights with a
+    typical value would hide a real difference between users.
+    """)
 
-        fig, ax = plt.subplots(figsize=(12, 7))
-        world.plot(ax=ax, color='#00B0B9', edgecolor='white', alpha=0.8)
-        ax.set_axis_off()
-        ax.set_title("Global Coverage of Fitbit Users", fontsize=15)
-        st.pyplot(fig)
-        st.success("Map generated successfully!")
-
-    except Exception as e:
-        st.error(f"Error: {e}")
-        st.info(
-            "If the error persists, the link may be blocked by a local firewall. The map is optional.")
+    with st.expander("Show coverage per user"):
+        st.dataframe(per_user.style.format({"SleepCoverage": "{:.0%}"}), use_container_width=True)
 
 # -----------------------------
 # 11. CONCLUSIONS

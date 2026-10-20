@@ -63,6 +63,48 @@ def compare_days_by_sleep_record(df, columns=("SedentaryMinutes", "TotalSteps", 
     return summary
 
 
+# --- Data coverage ---
+
+COVERAGE_LABELS = {
+    0: "No record",
+    1: "Not worn (0 steps, 24 h sedentary)",
+    2: "Activity only",
+    3: "Activity + sleep",
+}
+
+
+def day_coverage_status(df):
+    """Return a coverage code (see COVERAGE_LABELS) for every row of the merged table."""
+    not_worn = (df["TotalSteps"] == 0) & (df["SedentaryMinutes"] == 1440)
+    has_sleep = df["TotalMinutesAsleep"].notna()
+    return pd.Series(np.select([not_worn, has_sleep], [1, 3], default=2), index=df.index, name="Coverage")
+
+
+def coverage_matrix(df):
+    """Return a users x dates table of coverage codes; dates without a record get 0.
+
+    Users are sorted by how many nights they have a sleep record, most first.
+    """
+    status = df[["Id", "ActivityDateOnly"]].assign(Coverage=day_coverage_status(df))
+    matrix = status.pivot(index="Id", columns="ActivityDateOnly", values="Coverage")
+    all_dates = pd.date_range(min(matrix.columns), max(matrix.columns)).date
+    matrix = matrix.reindex(columns=all_dates).fillna(0).astype(int)
+    order = (matrix == 3).sum(axis=1).sort_values(ascending=False, kind="stable").index
+    return matrix.loc[order]
+
+
+def coverage_by_user(df):
+    """Return, for each user, the days recorded, days not worn, nights with sleep data and sleep coverage."""
+    status = day_coverage_status(df)
+    summary = pd.DataFrame({
+        "DaysRecorded": df.groupby("Id").size(),
+        "DaysNotWorn": (status == 1).groupby(df["Id"]).sum(),
+        "NightsWithSleep": (status == 3).groupby(df["Id"]).sum(),
+    })
+    summary["SleepCoverage"] = summary["NightsWithSleep"] / summary["DaysRecorded"]
+    return summary.sort_values("NightsWithSleep", ascending=False, kind="stable")
+
+
 # --- Encoding and scaling ---
 
 def lifestyle_category(steps):

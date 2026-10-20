@@ -20,12 +20,12 @@ The app is organised in sections, selectable from the sidebar:
 | K-Means clustering | Segmentation into 3 activity profiles, steps vs. calories scatter plot |
 | Logistic regression | Classifier for a "healthy day" label, without data leakage, tested on unseen users and compared with a majority-class baseline (recall, F1, ROC AUC) |
 | Multiple regression (OLS) | How steps, activity and sleep relate to calories burned |
-| Geographic view | World map built with GeoPandas |
+| Data coverage | Heatmap of which days each user wore the device, by day and by night |
 | Conclusions | Key findings computed live from the data, limitations and recommendations |
 
 ## Tech stack
 
-Python, Streamlit, pandas, NumPy, scikit-learn, statsmodels, Matplotlib, seaborn, GeoPandas.
+Python, Streamlit, pandas, NumPy, scikit-learn, statsmodels, Matplotlib, seaborn, pytest.
 
 ## Dataset
 
@@ -66,9 +66,7 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-The app opens at <http://localhost:8501>. Run it from the repository root, because the data files are
-loaded with relative paths. The geographic section downloads a GeoJSON file at runtime and needs an
-internet connection.
+The app opens at <http://localhost:8501>. It runs fully offline: the data files ship with the repository.
 
 ## Run the tests
 
@@ -78,7 +76,7 @@ pytest
 ```
 
 The tests cover data loading and merging, the analysis functions, and a smoke test that renders every
-section of the app (except the map, which needs an internet connection).
+section of the app.
 
 ## Project structure
 

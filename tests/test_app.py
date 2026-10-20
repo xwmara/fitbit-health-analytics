@@ -7,7 +7,6 @@ from streamlit.testing.v1 import AppTest
 
 APP_PATH = str(Path(__file__).resolve().parent.parent / "app.py")
 
-# The map section downloads data from the internet, so it is not run here.
 SECTIONS = [
     "1. About the project",
     "2. Data exploration",
@@ -18,6 +17,7 @@ SECTIONS = [
     "7. K-Means clustering",
     "8. Logistic regression",
     "9. Multiple regression",
+    "10. Data coverage",
     "11. Conclusions",
 ]
 
