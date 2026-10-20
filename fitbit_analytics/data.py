@@ -21,8 +21,9 @@ def load_raw_data(data_dir=DATA_DIR):
     daily = pd.read_csv(data_dir / "dailyActivity_merged.csv").drop_duplicates(ignore_index=True)
     sleep = pd.read_csv(data_dir / "sleepDay_merged.csv").drop_duplicates(ignore_index=True)
 
-    daily["ActivityDate"] = pd.to_datetime(daily["ActivityDate"])
-    sleep["SleepDay"] = pd.to_datetime(sleep["SleepDay"])
+    # Explicit formats: faster, and no silent guessing of day/month order
+    daily["ActivityDate"] = pd.to_datetime(daily["ActivityDate"], format="%m/%d/%Y")
+    sleep["SleepDay"] = pd.to_datetime(sleep["SleepDay"], format="%m/%d/%Y %I:%M:%S %p")
     return daily, sleep
 
 

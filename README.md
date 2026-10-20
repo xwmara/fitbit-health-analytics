@@ -83,6 +83,7 @@ section of the app.
 ```
 fitbit-health-analytics/
 ├── app.py                 # Streamlit app (user interface only)
+├── .streamlit/config.toml # Streamlit theme
 ├── fitbit_analytics/
 │   ├── data.py            # Loading, merging and cleaning the CSV files
 │   └── analysis.py        # Outliers, encoding, scaling, clustering and regression models

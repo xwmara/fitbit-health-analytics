@@ -11,33 +11,11 @@ AUTHOR_NAME = "Mara-Livia Popa"
 GITHUB_URL = "https://github.com/xwmara"
 LINKEDIN_URL = "https://www.linkedin.com/in/mara-livia-popa-99ba18337/"
 
-# Page configuration
-st.set_page_config(page_title="Fitbit Health Analytics", layout="wide")
+# Page configuration (colours and fonts are set in .streamlit/config.toml)
+st.set_page_config(page_title="Fitbit Health Analytics", page_icon="📊", layout="wide")
 
-# --- CUSTOM STYLING (CSS) ---
-st.markdown(
-    """
-    <style>
-    .main-title {
-        color: #00B0B9;
-        font-size: 42px;
-        text-align: center;
-        font-weight: bold;
-        margin-bottom: 20px;
-    }
-    .stMetric {
-        background-color: #f0f2f6;
-        padding: 15px;
-        border-radius: 10px;
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown('<h1 class="main-title">Modelling and Evaluating a Healthy Lifestyle</h1>', unsafe_allow_html=True)
-st.write("A Streamlit app built on Fitbit activity and sleep data")
+st.title("Fitbit Health Analytics")
+st.caption("Modelling and evaluating a healthy lifestyle from Fitbit activity and sleep data")
 
 # -----------------------------
 # DATA LOADING
@@ -75,25 +53,13 @@ with st.sidebar:
     if st.session_state['visitor_name']:
         st.write(f"Hi, **{st.session_state['visitor_name']}**! 👋")
 
-# --- SIDEBAR PROFILE ---
-st.sidebar.markdown(
-    """
-    <div style="text-align: center;">
-        <img src="https://www.pngall.com/wp-content/uploads/5/Profile-Avatar-PNG.png" width="100" style="border-radius: 50%;">
-        <h2 style="color: #00B0B9;">Fitbit User</h2>
-        <p style="font-size: 0.9em; color: gray;">Health Analytics v1.0</p>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
 st.sidebar.markdown("---")
 st.sidebar.subheader("Quick Stats")
 
-# Headline metrics
-st.sidebar.metric("Average Steps", f"{int(df['TotalSteps'].mean())}", "steps/day")
-st.sidebar.metric("Average Calories", f"{int(df['Calories'].mean())} kcal")
-st.sidebar.metric("Average Sleep", f"{int(df['TotalMinutesAsleep'].mean() if not np.isnan(df['TotalMinutesAsleep'].mean()) else 0)} min")
+# Headline metrics (daily averages; sleep only over nights with a sleep record)
+st.sidebar.metric("Average Steps per Day", f"{df['TotalSteps'].mean():,.0f}")
+st.sidebar.metric("Average Calories per Day", f"{df['Calories'].mean():,.0f} kcal")
+st.sidebar.metric("Average Sleep per Night", f"{df_sleep['TotalMinutesAsleep'].mean() / 60:.1f} h")
 
 st.sidebar.markdown("---")
 # Section menu
@@ -162,7 +128,7 @@ elif menu == "2. Data exploration":
 
     with tab1:
         st.subheader("Daily Activity Structure")
-        st.dataframe(daily_activity.head(10), use_container_width=True)
+        st.dataframe(daily_activity.head(10), width="stretch")
 
         # Column information
         col1_info, col2_info = st.columns(2)
@@ -176,7 +142,7 @@ elif menu == "2. Data exploration":
     with tab2:
         st.subheader("Sleep Data Structure")
         st.caption("Exact duplicate rows in the sleep file are removed when the data is loaded.")
-        st.dataframe(sleep_data.head(10), use_container_width=True)
+        st.dataframe(sleep_data.head(10), width="stretch")
 
         col1_s, col2_s = st.columns(2)
         with col1_s:
@@ -189,7 +155,7 @@ elif menu == "2. Data exploration":
     with tab3:
         st.subheader("Merged Dataset (Master Table)")
         st.info("The tables were combined with a **left join** on the composite key `[Id, ActivityDate]`.")
-        st.dataframe(df.head(10), use_container_width=True)
+        st.dataframe(df.head(10), width="stretch")
 
 # -----------------------------
 # 3. MISSING VALUES
@@ -209,7 +175,7 @@ elif menu == "3. Missing values":
         st.subheader("1. Before imputation")
         missing_counts = df.isnull().sum()
         # Show only the columns that actually have missing values
-        st.dataframe(missing_counts[missing_counts > 0], use_container_width=True)
+        st.dataframe(missing_counts[missing_counts > 0], width="stretch")
         st.warning(f" {df['TotalMinutesAsleep'].isna().mean():.0%} of the days have no sleep record.")
 
     with col_after:
@@ -220,7 +186,7 @@ elif menu == "3. Missing values":
 
         # Check again
         after_counts = df_clean.isnull().sum()
-        st.dataframe(after_counts[after_counts > 0], use_container_width=True)
+        st.dataframe(after_counts[after_counts > 0], width="stretch")
         st.success(" All numeric values have been filled in.")
 
     st.divider()
@@ -244,7 +210,7 @@ elif menu == "3. Missing values":
     # --- Missing sleep is not random ---
     st.subheader("Why the Models Do Not Use Imputed Sleep")
     comparison = analysis.compare_days_by_sleep_record(df)
-    st.dataframe(comparison.round(0), use_container_width=True)
+    st.dataframe(comparison.round(0), width="stretch")
 
     sed_without = comparison.loc["Without sleep record", "SedentaryMinutes"]
     sed_with = comparison.loc["With sleep record", "SedentaryMinutes"]
@@ -292,7 +258,7 @@ elif menu == "4. Outliers":
     with ol_graph:
         fig, ax = plt.subplots(figsize=(8, 4))
         # Fitbit teal for the box
-        ax.boxplot(series, vert=False, patch_artist=True,
+        ax.boxplot(series, orientation="horizontal", patch_artist=True,
                    boxprops=dict(facecolor='#00B0B9', color='black'),
                    medianprops=dict(color='orange'))
         ax.set_title(f"Boxplot: distribution of {col}")
@@ -345,13 +311,13 @@ elif menu == "5. Statistics and aggregations":
         st.subheader(" Descriptive Statistics")
         st.write("Numeric summary of the main variables:")
         st.dataframe(df[["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes"]].describe(),
-                     use_container_width=True)
+                     width="stretch")
 
     with col_b:
         st.subheader("Average per User")
         st.write("Aggregated by user Id (first 10 rows):")
         grouped_user = df.groupby("Id")[["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes"]].mean()
-        st.dataframe(grouped_user.head(10), use_container_width=True)
+        st.dataframe(grouped_user.head(10), width="stretch")
 
     st.divider()
 
@@ -390,11 +356,11 @@ elif menu == "6. Encoding and scaling":
     col_cat1, col_cat2 = st.columns(2)
     with col_cat1:
         st.write("**New variable:**")
-        st.dataframe(df_prep[["TotalSteps", "LifestyleCategory"]].head(10), use_container_width=True)
+        st.dataframe(df_prep[["TotalSteps", "LifestyleCategory"]].head(10), width="stretch")
 
     with col_cat2:
         st.write("**LabelEncoder result:**")
-        st.dataframe(df_prep[["LifestyleCategory", "LifestyleEncoded"]].drop_duplicates(), use_container_width=True)
+        st.dataframe(df_prep[["LifestyleCategory", "LifestyleEncoded"]].drop_duplicates(), width="stretch")
 
     st.divider()
 
@@ -410,10 +376,10 @@ elif menu == "6. Encoding and scaling":
     tab_raw, tab_scaled = st.tabs(["Original Data", "Scaled Data (StandardScaler)"])
 
     with tab_raw:
-        st.dataframe(X.head(10), use_container_width=True)
+        st.dataframe(X.head(10), width="stretch")
 
     with tab_scaled:
-        st.dataframe(X_scaled_df.head(10), use_container_width=True)
+        st.dataframe(X_scaled_df.head(10), width="stretch")
         st.caption("All values are now on a comparable scale (roughly between -3 and 3).")
 
 # -----------------------------
@@ -458,7 +424,7 @@ elif menu == "7. K-Means clustering":
     with col_cl2:
         st.subheader(" Cluster Comparison")
         st.dataframe(cluster_means.assign(Profile=cluster_means.index.map(cluster_names)),
-                     use_container_width=True)
+                     width="stretch")
 
     st.divider()
 
@@ -637,7 +603,7 @@ elif menu == "9. Multiple regression":
     with st.expander("Interpreting the Coefficients", expanded=True):
         # Raw coefficients use different units (per step vs. per minute), so compare standardized ones
         coef_table = analysis.standardized_coefficients(model, X, y)
-        st.dataframe(coef_table.set_index("Feature").round(4), use_container_width=True)
+        st.dataframe(coef_table.set_index("Feature").round(4), width="stretch")
 
         significant = coef_table[coef_table["PValue"] < 0.05]
         top = significant.iloc[0]
@@ -707,7 +673,7 @@ elif menu == "10. Data coverage":
     """)
 
     with st.expander("Show coverage per user"):
-        st.dataframe(per_user.style.format({"SleepCoverage": "{:.0%}"}), use_container_width=True)
+        st.dataframe(per_user.style.format({"SleepCoverage": "{:.0%}"}), width="stretch")
 
 # -----------------------------
 # 11. CONCLUSIONS
