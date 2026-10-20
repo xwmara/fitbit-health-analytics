@@ -1,34 +1,29 @@
-"""Smoke test: every section of the Streamlit app renders without an exception."""
+"""Smoke test: every page of the Streamlit app renders without an exception."""
 
 from pathlib import Path
 
 import pytest
 from streamlit.testing.v1 import AppTest
 
-APP_PATH = str(Path(__file__).resolve().parent.parent / "app.py")
+ROOT = Path(__file__).resolve().parent.parent
+APP_PATH = str(ROOT / "app.py")
 
-SECTIONS = [
-    "1. About the project",
-    "2. Data exploration",
-    "3. Missing values",
-    "4. Outliers",
-    "5. Statistics and aggregations",
-    "6. Encoding and scaling",
-    "7. K-Means clustering",
-    "8. Logistic regression",
-    "9. Multiple regression",
-    "10. Data coverage",
-    "11. Conclusions",
-]
+# Every page file registered in app.py
+PAGES = sorted(
+    f"app_pages/{p.name}" for p in (ROOT / "app_pages").glob("*.py")
+    if p.name not in ("__init__.py", "common.py")
+)
 
 
-@pytest.fixture(scope="module")
-def app():
-    return AppTest.from_file(APP_PATH, default_timeout=60).run()
+def test_all_pages_are_registered_in_navigation():
+    app_source = (ROOT / "app.py").read_text(encoding="utf-8")
+    for page in PAGES:
+        assert f'"{page}"' in app_source, f"{page} is not in the navigation"
 
 
-@pytest.mark.parametrize("section", SECTIONS)
-def test_section_renders_without_errors(app, section):
-    app.sidebar.selectbox[0].select(section).run()
+@pytest.mark.parametrize("page", PAGES)
+def test_page_renders_without_errors(page):
+    app = AppTest.from_file(APP_PATH, default_timeout=60).run()
+    app.switch_page(page).run()
     assert not app.exception
     assert not app.error

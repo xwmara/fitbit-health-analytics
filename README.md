@@ -41,7 +41,7 @@ Decisions made while reviewing the original university version of the analysis:
 
 ## What the app does
 
-The app is organised in sections, selectable from the sidebar:
+The app is organised in pages, grouped in the sidebar menu (Overview, Data, Models, Results):
 
 | Section | What it shows |
 | --- | --- |
@@ -113,12 +113,14 @@ section of the app. They also run automatically on GitHub Actions for every push
 
 ```
 fitbit-health-analytics/
-├── app.py                 # Streamlit app (user interface only)
+├── app.py                 # Entry point: page setup and navigation menu
+├── app_pages/             # One file per page of the app (+ common.py for shared data)
 ├── .streamlit/config.toml # Streamlit theme
 ├── .github/workflows/     # GitHub Actions: run the tests on every push
 ├── fitbit_analytics/
 │   ├── data.py            # Loading, merging and cleaning the CSV files
-│   └── analysis.py        # Outliers, encoding, scaling, clustering and regression models
+│   ├── analysis.py        # Outliers, encoding, scaling, clustering and regression models
+│   └── charts.py          # Shared colour palette and chart style
 ├── data/                  # Fitbit CSV files
 ├── tests/                 # pytest test suite
 ├── requirements.txt       # Pinned Python dependencies
