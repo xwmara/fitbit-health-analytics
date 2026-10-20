@@ -1,6 +1,7 @@
 """Shared colours and Matplotlib style, so every chart in the app looks the same."""
 
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 
 # Palette (also used for Streamlit's built-in charts in .streamlit/config.toml)
 PRIMARY = "#0E7C86"   # deep teal
@@ -70,3 +71,12 @@ def apply_style():
         "font.sans-serif": ["Inter", "Segoe UI", "Helvetica", "Arial", "DejaVu Sans"],
         "axes.prop_cycle": plt.cycler(color=[PRIMARY, ACCENT, AMBER, BLUE, GREY]),
     })
+
+
+def thousands(ax, axis="both"):
+    """Show axis tick labels with thousands separators (5,000 instead of 5000)."""
+    formatter = FuncFormatter(lambda value, _: f"{value:,.0f}")
+    if axis in ("x", "both"):
+        ax.xaxis.set_major_formatter(formatter)
+    if axis in ("y", "both"):
+        ax.yaxis.set_major_formatter(formatter)

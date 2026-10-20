@@ -2,7 +2,6 @@
 
 import streamlit as st
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
 
 from fitbit_analytics import analysis, charts
 from app_pages.common import load_data, CLUSTER_FEATURES, sleep_subset_note
@@ -66,26 +65,18 @@ st.divider()
 # --- SCATTER PLOT ---
 st.subheader("Segments: Steps vs. Calories")
 
-fig, ax = plt.subplots(figsize=(10, 6))
-scatter = ax.scatter(
-    df_cluster["TotalSteps"],
-    df_cluster["Calories"],
-    c=df_cluster["Cluster"],
-    # Each cluster gets its profile's fixed colour (cluster ids are 0, 1, 2)
-    cmap=ListedColormap([charts.CLUSTER_COLORS[cluster_names[c]] for c in sorted(cluster_names)]),
-    s=40,
-    alpha=0.75,
-    edgecolors="white",
-    linewidths=0.5,
-)
+fig, ax = plt.subplots(figsize=(10, 5.5))
+# One scatter call per profile, in a fixed order and colour, so the legend shows profile names
+for c, name in sorted(cluster_names.items(), key=lambda item: analysis.CLUSTER_NAMES.index(item[1])):
+    days = df_cluster[df_cluster["Cluster"] == c]
+    ax.scatter(days["TotalSteps"], days["Calories"], s=36, alpha=0.75,
+               color=charts.CLUSTER_COLORS[name], edgecolors="white", linewidths=0.5,
+               label=f"{name} ({len(days)} days)")
 
-# Legend
-legend1 = ax.legend(*scatter.legend_elements(), title="Clusters")
-ax.add_artist(legend1)
-
-ax.set_xlabel("Total Steps")
-ax.set_ylabel("Calories")
-ax.grid(True, linestyle='--', alpha=0.6)
+ax.legend(title="Profile", loc="upper left")
+ax.set_xlabel(charts.label("TotalSteps"))
+ax.set_ylabel(charts.label("Calories"))
+charts.thousands(ax)
 
 st.pyplot(fig)
 

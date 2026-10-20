@@ -2,7 +2,6 @@
 
 import streamlit as st
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 from fitbit_analytics import analysis, charts
 from app_pages.common import load_data, OLS_FEATURES, sleep_subset_note
@@ -51,12 +50,18 @@ with tab_viz:
     st.subheader("Actual vs. Predicted Values")
     df_reg["Predictions"] = model.predict(X_with_const)
 
-    fig, ax = plt.subplots(figsize=(10, 5))
-    sns.regplot(data=df_reg, x="Calories", y="Predictions",
-                scatter_kws={'alpha': 0.4, 'color': charts.GREY, 's': 18},
-                line_kws={'color': charts.PRIMARY, 'linewidth': 2})
-    ax.set_title("Regression model accuracy")
+    fig, ax = plt.subplots(figsize=(8, 5.5))
+    ax.scatter(df_reg["Calories"], df_reg["Predictions"], s=18, alpha=0.5, color=charts.PRIMARY,
+               edgecolors="white", linewidths=0.4)
+    limits = [min(df_reg["Calories"].min(), df_reg["Predictions"].min()),
+              max(df_reg["Calories"].max(), df_reg["Predictions"].max())]
+    ax.plot(limits, limits, linestyle="--", color=charts.ACCENT, linewidth=1.5, label="Perfect prediction")
+    ax.set_xlabel("Actual calories (kcal)")
+    ax.set_ylabel("Predicted calories (kcal)")
+    ax.legend(loc="upper left")
+    charts.thousands(ax)
     st.pyplot(fig)
+    st.caption("Each dot is a day. The closer the dots are to the dashed line, the better the prediction.")
 
 # --- LEVEL 3: INTERPRETATION ---
 with st.expander("Interpreting the Coefficients", expanded=True):

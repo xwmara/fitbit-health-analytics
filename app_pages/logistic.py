@@ -75,19 +75,31 @@ with c2:
     cm = result.confusion_matrix
 
     # Confusion matrix heatmap
-    fig, ax = plt.subplots(figsize=(4, 3))
-    sns.heatmap(cm, annot=True, fmt='d', cmap=sns.light_palette(charts.PRIMARY, as_cmap=True),
-                ax=ax, cbar=False, linewidths=1, linecolor="white")
-    ax.set_xlabel('Predicted')
-    ax.set_ylabel('Actual')
+    class_names = ["Not healthy", "Healthy"]
+    fig, ax = plt.subplots(figsize=(4.6, 3.4))
+    sns.heatmap(cm, annot=True, fmt="d", cmap=sns.light_palette(charts.PRIMARY, as_cmap=True),
+                ax=ax, cbar=False, linewidths=2, linecolor="white", square=True,
+                xticklabels=class_names, yticklabels=class_names, annot_kws={"size": 13})
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("Actual")
+    ax.tick_params(axis="y", rotation=0)
+    ax.grid(False)
     st.pyplot(fig)
+    st.caption(f"Test set: {int(cm.sum())} days from users the model never saw during training.")
 
 st.divider()
 
 # --- FEATURE IMPORTANCE ---
-st.subheader("Factor Importance for a Healthy Lifestyle")
+st.subheader("What Raises the Chance of a Healthy Day")
 importance = result.coefficients
-st.bar_chart(data=importance, x='Feature', y='Importance', color=charts.PRIMARY)
+ordered = importance.sort_values("Importance")
+fig, ax = plt.subplots(figsize=(9, 2.8))
+ax.barh([charts.label(f) for f in ordered["Feature"]], ordered["Importance"],
+        color=[charts.PRIMARY if v >= 0 else charts.ACCENT for v in ordered["Importance"]], height=0.55)
+ax.axvline(0, color=charts.MUTED, linewidth=0.8)
+ax.set_xlabel("Standardized coefficient (log-odds per standard deviation)")
+ax.grid(axis="y", visible=False)
+st.pyplot(fig)
 
 with st.expander("Interpreting the results"):
     st.write(f"""
@@ -100,5 +112,5 @@ with st.expander("Interpreting the results"):
     clearly better than chance, but not perfectly, with only {df_log["Id"].nunique()} users to learn from.
 
     The coefficients are computed on standardised features, so they can be compared: the largest
-    positive one, **{importance.iloc[0]['Feature']}**, raises the predicted probability of a healthy day the most.
+    positive one, **{charts.label(importance.iloc[0]['Feature'])}**, raises the predicted probability of a healthy day the most.
     """)
