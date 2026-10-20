@@ -54,6 +54,15 @@ def average_steps_by_weekday(daily):
     )
 
 
+def compare_days_by_sleep_record(df, columns=("SedentaryMinutes", "TotalSteps", "Calories")):
+    """Compare average activity on days with and without a sleep record."""
+    has_record = df["TotalMinutesAsleep"].notna().map({True: "With sleep record", False: "Without sleep record"})
+    summary = df.groupby(has_record)[list(columns)].mean()
+    summary.insert(0, "Days", has_record.value_counts())
+    summary.index.name = None
+    return summary
+
+
 # --- Encoding and scaling ---
 
 def lifestyle_category(steps):

@@ -13,7 +13,7 @@ The app is organised in sections, selectable from the sidebar:
 | Section | What it shows |
 | --- | --- |
 | Data exploration | Structure of the two datasets and the merged table |
-| Missing values | Missing-value counts before and after median imputation |
+| Missing values | Median imputation, and why missing sleep is not random (the device is often not worn at night) |
 | Outliers | IQR-based outlier detection with a boxplot for a chosen variable |
 | Statistics and aggregations | Descriptive statistics, per-user averages, average steps by weekday |
 | Encoding and scaling | Lifestyle categories from step counts, label encoding, standardisation |
@@ -43,6 +43,10 @@ This project uses two of its files, stored in [`data/`](data/):
 
 The data covers one month (April–May 2016) from users who volunteered through an online survey, so it is
 a small, self-selected sample and the results should not be generalised to the wider population.
+
+56% of the days have no sleep record, and on those days the night shows up as sedentary time. The models
+that use sleep (K-Means, logistic regression, OLS) are therefore fitted only on the 410 days with a real
+sleep record (24 users), instead of imputing the missing values.
 
 ## Run locally
 

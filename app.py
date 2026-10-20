@@ -203,7 +203,7 @@ elif menu == "3. Missing values":
         missing_counts = df.isnull().sum()
         # Show only the columns that actually have missing values
         st.dataframe(missing_counts[missing_counts > 0], use_container_width=True)
-        st.warning(" The sleep columns have many missing values.")
+        st.warning(f" {df['TotalMinutesAsleep'].isna().mean():.0%} of the days have no sleep record.")
 
     with col_after:
         st.subheader("2. After imputation")
@@ -231,6 +231,30 @@ elif menu == "3. Missing values":
         We chose **median imputation** over the mean because Fitbit data (such as steps or calories)
         tends to be skewed. In this context the median gives a more central and more stable estimate.
         """)
+
+    st.divider()
+
+    # --- Missing sleep is not random ---
+    st.subheader("Why the Models Do Not Use Imputed Sleep")
+    comparison = analysis.compare_days_by_sleep_record(df)
+    st.dataframe(comparison.round(0), use_container_width=True)
+
+    sed_without = comparison.loc["Without sleep record", "SedentaryMinutes"]
+    sed_with = comparison.loc["With sleep record", "SedentaryMinutes"]
+    st.write(f"""
+    Missing sleep values are **not random**. On days without a sleep record, users log on average
+    **{sed_without:,.0f} sedentary minutes** ({sed_without / 60:.1f} hours), compared with **{sed_with:,.0f}**
+    on days with a record. The most likely explanation is that the device was not worn at night,
+    so the night was counted as sedentary time.
+
+    Filling in a typical sleep value for these days would pair a full night of "sedentary" time with a
+    full night of sleep, which is impossible. In an earlier version, K-Means mostly separated days
+    without a sleep record from the rest, instead of finding lifestyle patterns.
+
+    For that reason, the models that use sleep (K-Means, logistic regression and OLS) work only on the
+    **{len(df_sleep)} days with a real sleep record**. Median imputation is shown above as a technique,
+    not used for modelling.
+    """)
 
 # -----------------------------
 # 4. OUTLIERS

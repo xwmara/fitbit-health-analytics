@@ -39,6 +39,19 @@ def test_average_steps_by_weekday_is_ordered_monday_to_sunday():
     assert "DayOfWeek" not in daily.columns  # input is not modified
 
 
+def test_compare_days_by_sleep_record():
+    df = pd.DataFrame({
+        "TotalMinutesAsleep": [400, None, None],
+        "SedentaryMinutes": [700, 1200, 1300],
+        "TotalSteps": [9000, 5000, 6000],
+        "Calories": [2400, 2000, 2100],
+    })
+    summary = analysis.compare_days_by_sleep_record(df)
+    assert summary.loc["With sleep record", "Days"] == 1
+    assert summary.loc["Without sleep record", "Days"] == 2
+    assert summary.loc["Without sleep record", "SedentaryMinutes"] == 1250
+
+
 # --- Encoding and scaling ---
 
 @pytest.mark.parametrize("steps, expected", [
