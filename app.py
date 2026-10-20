@@ -469,22 +469,40 @@ elif menu == "8. Logistic regression":
     # Target variable
     df_log["HealthyLifestyle"] = analysis.healthy_lifestyle_label(df_log)
 
-    features = ["Calories", "SedentaryMinutes", "VeryActiveMinutes", "TotalMinutesAsleep", "TotalDistance"]
+    # Only variables that are NOT used to define the label. Steps, distance (~steps),
+    # sedentary minutes and sleep would let the model rebuild the label instead of learning.
+    features = ["Calories", "VeryActiveMinutes", "FairlyActiveMinutes", "LightlyActiveMinutes"]
     X = data.fill_missing_with_median(df_log[features], features)
 
     y = df_log["HealthyLifestyle"]
 
-    # Train/test split, scaling and model training
-    result = analysis.train_logistic_regression(X, y, test_size=0.3, random_state=42)
+    with st.expander("🔍 How the model is set up", expanded=True):
+        st.write(f"""
+        - **Features:** {", ".join(features)}. The variables used to define the label (steps, sedentary
+          minutes, sleep) and distance, which is almost the same as steps, are left out. Otherwise the
+          model would just rebuild the rule instead of learning anything (*data leakage*).
+        - **Train/test split by user:** 30% of the users are held out, so the model is tested on people
+          it has never seen.
+        - **Balanced class weights:** only {y.mean():.0%} of the days are healthy, so the rare class gets more weight.
+        """)
+
+    # Train/test split by user, scaling and model training
+    result = analysis.train_logistic_regression(X, y, groups=df_log["Id"], test_size=0.3, random_state=42)
     acc = result.accuracy
 
     # --- RESULTS ---
+    m1, m2, m3, m4, m5 = st.columns(5)
+    m1.metric("Accuracy", f"{acc:.1%}")
+    m2.metric("Baseline accuracy", f"{result.baseline_accuracy:.1%}",
+              help="Accuracy of always predicting the most common class")
+    m3.metric("Recall (healthy)", f"{result.recall:.1%}", help="Share of healthy days the model finds")
+    m4.metric("F1 (healthy)", f"{result.f1:.2f}")
+    m5.metric("ROC AUC", f"{result.roc_auc:.2f}", help="0.5 = random guessing, 1.0 = perfect separation")
+
     c1, c2 = st.columns(2)
 
     with c1:
-        st.subheader("Model Performance")
-        st.metric("Accuracy", f"{acc:.2%}")
-        st.write("Classification report:")
+        st.subheader("Classification Report")
         st.text(result.report)
 
     with c2:
@@ -507,9 +525,16 @@ elif menu == "8. Logistic regression":
 
     with st.expander("📝 Interpreting the Results"):
         st.write(f"""
-        The model has an accuracy of **{acc:.2%}**.
-        The variable with the largest positive coefficient has the strongest influence on the probability of a healthy day.
-        Here, **{importance.iloc[0]['Feature']}** is the key factor.
+        Because healthy days are rare, accuracy alone is misleading: always answering "not healthy"
+        already scores **{result.baseline_accuracy:.1%}** on this test set, but finds none of the healthy days.
+        The model's accuracy is lower because the balanced class weights make it flag more days as healthy:
+        it finds **{result.recall:.0%}** of them, at the cost of more false alarms.
+        Recall, F1 and ROC AUC show how well the model actually finds healthy days. An ROC AUC of **{result.roc_auc:.2f}** means the model
+        separates the two classes better than chance, but far from perfectly, which is expected for a
+        small dataset of {df_log["Id"].nunique()} users.
+
+        The coefficients are computed on standardised features, so they can be compared: the largest
+        positive one, **{importance.iloc[0]['Feature']}**, raises the predicted probability of a healthy day the most.
         """)
 
 # -----------------------------

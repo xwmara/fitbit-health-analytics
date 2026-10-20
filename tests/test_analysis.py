@@ -121,9 +121,44 @@ def test_train_logistic_regression_on_separable_data():
 
     assert len(result.y_test) == 60  # 30% of 200
     assert result.accuracy > 0.9
+    assert result.recall > 0.9
+    assert result.roc_auc > 0.95
     assert result.confusion_matrix.shape == (2, 2)
     assert result.coefficients["Feature"].iloc[0] == "signal"
     assert result.coefficients["Importance"].is_monotonic_decreasing
+
+
+def test_baseline_accuracy_is_share_of_majority_class():
+    rng = np.random.default_rng(3)
+    X = pd.DataFrame({"x": rng.normal(size=300)})
+    y = pd.Series((rng.random(300) < 0.1).astype(int))  # ~10% positives
+
+    result = analysis.train_logistic_regression(X, y)
+
+    assert result.baseline_accuracy == pytest.approx(1 - result.y_test.mean())
+
+
+def test_split_train_test_keeps_each_group_in_one_set():
+    X = pd.DataFrame({"x": range(100)})
+    y = pd.Series([0, 1] * 50)
+    groups = pd.Series(np.repeat(range(10), 10))  # 10 users with 10 days each
+
+    X_train, X_test, _, _ = analysis.split_train_test(X, y, groups=groups)
+
+    train_users = set(groups[X_train.index])
+    test_users = set(groups[X_test.index])
+    assert train_users.isdisjoint(test_users)
+    assert len(test_users) == 3  # 30% of 10 users
+
+
+def test_split_train_test_without_groups_is_stratified():
+    X = pd.DataFrame({"x": range(100)})
+    y = pd.Series([1] * 20 + [0] * 80)
+
+    _, _, y_train, y_test = analysis.split_train_test(X, y)
+
+    assert y_train.mean() == pytest.approx(0.2)
+    assert y_test.mean() == pytest.approx(0.2)
 
 
 # --- Linear regression ---

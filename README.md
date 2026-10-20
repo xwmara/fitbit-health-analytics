@@ -18,7 +18,7 @@ The app is organised in sections, selectable from the sidebar:
 | Statistics and aggregations | Descriptive statistics, per-user averages, average steps by weekday |
 | Encoding and scaling | Lifestyle categories from step counts, label encoding, standardisation |
 | K-Means clustering | Segmentation into 3 activity profiles, steps vs. calories scatter plot |
-| Logistic regression | Classifier for a "healthy lifestyle" label, accuracy and confusion matrix |
+| Logistic regression | Classifier for a "healthy day" label, without data leakage, tested on unseen users and compared with a majority-class baseline (recall, F1, ROC AUC) |
 | Multiple regression (OLS) | How steps, activity and sleep relate to calories burned |
 | Geographic view | World map built with GeoPandas |
 | Conclusions | Summary of the findings |

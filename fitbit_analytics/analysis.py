@@ -10,8 +10,16 @@ import pandas as pd
 import statsmodels.api as sm
 from sklearn.cluster import KMeans
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.model_selection import GroupShuffleSplit, train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 WEEKDAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -112,23 +120,50 @@ class ClassificationResult:
     y_test: pd.Series
     y_pred: np.ndarray
     accuracy: float
+    baseline_accuracy: float  # accuracy of always predicting the most common training class
+    precision: float
+    recall: float
+    f1: float
+    roc_auc: float  # NaN if the test set contains only one class
     confusion_matrix: np.ndarray
     report: str
     coefficients: pd.DataFrame  # columns: Feature, Importance (sorted descending)
 
 
-def train_logistic_regression(X, y, test_size=0.3, random_state=42):
-    """Split the data, standardize it, fit a logistic regression and evaluate it on the test set."""
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, random_state=random_state
-    )
+def split_train_test(X, y, groups=None, test_size=0.3, random_state=42):
+    """Split into train and test sets.
+
+    With `groups` (e.g. user Ids), every group lands entirely in one set, so the model is
+    tested on users it has never seen. Without groups, the split is stratified by `y` so
+    both sets keep the same class balance.
+    """
+    if groups is None:
+        return train_test_split(X, y, test_size=test_size, random_state=random_state, stratify=y)
+    splitter = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=random_state)
+    train_idx, test_idx = next(splitter.split(X, y, groups))
+    return X.iloc[train_idx], X.iloc[test_idx], y.iloc[train_idx], y.iloc[test_idx]
+
+
+def train_logistic_regression(X, y, groups=None, test_size=0.3, random_state=42,
+                              class_weight="balanced"):
+    """Split the data, standardize it, fit a logistic regression and evaluate it on the test set.
+
+    `class_weight="balanced"` gives the rare class more weight, so the model does not learn
+    to always predict the common class.
+    """
+    X_train, X_test, y_train, y_test = split_train_test(X, y, groups, test_size, random_state)
+
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
-    model = LogisticRegression(max_iter=1000)
+    model = LogisticRegression(max_iter=1000, class_weight=class_weight)
     model.fit(X_train_scaled, y_train)
     y_pred = model.predict(X_test_scaled)
+    y_proba = model.predict_proba(X_test_scaled)[:, 1]
+
+    majority_class = y_train.mode()[0]
+    both_classes_in_test = y_test.nunique() == 2
 
     coefficients = pd.DataFrame({"Feature": list(X.columns), "Importance": model.coef_[0]})
     coefficients = coefficients.sort_values(by="Importance", ascending=False)
@@ -138,8 +173,13 @@ def train_logistic_regression(X, y, test_size=0.3, random_state=42):
         y_test=y_test,
         y_pred=y_pred,
         accuracy=accuracy_score(y_test, y_pred),
-        confusion_matrix=confusion_matrix(y_test, y_pred),
-        report=classification_report(y_test, y_pred),
+        baseline_accuracy=accuracy_score(y_test, np.full(len(y_test), majority_class)),
+        precision=precision_score(y_test, y_pred, zero_division=0),
+        recall=recall_score(y_test, y_pred, zero_division=0),
+        f1=f1_score(y_test, y_pred, zero_division=0),
+        roc_auc=roc_auc_score(y_test, y_proba) if both_classes_in_test else float("nan"),
+        confusion_matrix=confusion_matrix(y_test, y_pred, labels=[0, 1]),
+        report=classification_report(y_test, y_pred, labels=[0, 1], zero_division=0),
         coefficients=coefficients,
     )
 
