@@ -124,8 +124,15 @@ fitbit-health-analytics/
 ├── requirements.txt       # Pinned Python dependencies
 ├── requirements-dev.txt   # Extra tools for development (pytest)
 ├── pyproject.toml         # pytest configuration
+├── LICENSE                # MIT License (code only)
 └── README.md
 ```
+
+## License
+
+The code is released under the [MIT License](LICENSE). The Fitbit data in [`data/`](data/) is not covered by
+it: it belongs to its authors and is redistributed under its original
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) license (see [Dataset](#dataset)).
 
 ## Background
 
