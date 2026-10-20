@@ -65,6 +65,16 @@ The app opens at <http://localhost:8501>. Run it from the repository root, becau
 loaded with relative paths. The geographic section downloads a GeoJSON file at runtime and needs an
 internet connection.
 
+## Run the tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+The tests cover data loading and merging, the analysis functions, and a smoke test that renders every
+section of the app (except the map, which needs an internet connection).
+
 ## Project structure
 
 ```
@@ -74,7 +84,10 @@ fitbit-health-analytics/
 │   ├── data.py            # Loading, merging and cleaning the CSV files
 │   └── analysis.py        # Outliers, encoding, scaling, clustering and regression models
 ├── data/                  # Fitbit CSV files
+├── tests/                 # pytest test suite
 ├── requirements.txt       # Pinned Python dependencies
+├── requirements-dev.txt   # Extra tools for development (pytest)
+├── pyproject.toml         # pytest configuration
 └── README.md
 ```
 

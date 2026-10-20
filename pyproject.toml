@@ -1,0 +1,4 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Lets the tests import the fitbit_analytics package from the repository root
+pythonpath = ["."]
