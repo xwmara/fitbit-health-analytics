@@ -1,17 +1,10 @@
 import streamlit as st
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.cluster import KMeans
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-import statsmodels.api as sm
 import seaborn as sns
 import geopandas as gpd
 
-from fitbit_analytics import data
+from fitbit_analytics import analysis, data
 
 
 #  Configurația paginii
@@ -241,22 +234,17 @@ elif menu == "4. Valori extreme":
     ar putea fi erori de senzor sau comportamente atipice ce pot distorsiona mediile.
     """)
 
-    df_out = df.copy()
     col = st.selectbox(
         "Selectați variabila pentru analiză:",
         ["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes", "TotalMinutesAsleep"]
     )
 
-    series = df_out[col].dropna()
+    series = df[col].dropna()
 
     # Calcule statistice
-    q1 = series.quantile(0.25)
-    q3 = series.quantile(0.75)
-    iqr = q3 - q1
-    lower = q1 - 1.5 * iqr
-    upper = q3 + 1.5 * iqr
-
-    outliers = df_out[(df_out[col] < lower) | (df_out[col] > upper)]
+    outliers, bounds = analysis.find_outliers(df, col)
+    q1, q3, iqr = bounds["q1"], bounds["q3"], bounds["iqr"]
+    lower, upper = bounds["lower"], bounds["upper"]
 
     # --- LAYOUT PE COLOANE ---
     ol_graph, ol_stats = st.columns([2, 1])
@@ -330,10 +318,8 @@ elif menu == "5. Statistici și agregări":
     # --- NIVEL 3: ANALIZA PE ZILE (Cerința: Reprezentări grafice) ---
     st.subheader("Dinamica Pașilor pe Zilele Săptămânii")
 
-    # Calculăm media pe zile (păstrăm logica ta, dar ordonăm zilele)
-    daily_activity["DayOfWeek"] = daily_activity["ActivityDate"].dt.day_name()
-    order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    grouped_day = daily_activity.groupby("DayOfWeek")["TotalSteps"].mean().reindex(order).reset_index()
+    # Calculăm media pe zile, ordonate de luni până duminică
+    grouped_day = analysis.average_steps_by_weekday(daily_activity)
 
     # Folosim st.bar_chart pentru interactivitate (e mai modern decât plt.bar)
     st.bar_chart(data=grouped_day, x="DayOfWeek", y="TotalSteps", color="#00B0B9")
@@ -359,16 +345,7 @@ elif menu == "6. Codificare și scalare":
     # --- 1. CODIFICARE (Label Encoding) ---
     st.subheader("1. Codificarea Variabilelor Categoriale")
 
-
-    def lifestyle_category(steps):
-        if steps < 5000:
-            return "Sedentar"
-        elif steps < 10000:
-            return "Moderat activ"
-        return "Activ"
-
-
-    df_prep["LifestyleCategory"] = df_prep["TotalSteps"].apply(lifestyle_category)
+    df_prep = analysis.add_lifestyle_encoding(df_prep)
 
     col_cat1, col_cat2 = st.columns(2)
     with col_cat1:
@@ -376,8 +353,6 @@ elif menu == "6. Codificare și scalare":
         st.dataframe(df_prep[["TotalSteps", "LifestyleCategory"]].head(10), use_container_width=True)
 
     with col_cat2:
-        encoder = LabelEncoder()
-        df_prep["LifestyleEncoded"] = encoder.fit_transform(df_prep["LifestyleCategory"])
         st.write("**Rezultat LabelEncoder:**")
         st.dataframe(df_prep[["LifestyleCategory", "LifestyleEncoded"]].drop_duplicates(), use_container_width=True)
 
@@ -390,10 +365,7 @@ elif menu == "6. Codificare și scalare":
     features = ["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes", "TotalMinutesAsleep"]
     # Asigurăm completarea tuturor valorilor nule înainte de scalare
     X = data.fill_missing_with_median(df_prep[features], features)
-
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-    X_scaled_df = pd.DataFrame(X_scaled, columns=features)
+    X_scaled_df = analysis.standardize(X)
 
     tab_raw, tab_scaled = st.tabs(["Date Originale", "Date Scalate (StandardScaler)"])
 
@@ -420,13 +392,8 @@ elif menu == "7. Clusterizare KMeans":
     # Pregătire date
     df_cluster = data.fill_missing_with_median(df, features)
 
-    X = df_cluster[features]
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-
-    # Modelul KMeans
-    kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
-    df_cluster["Cluster"] = kmeans.fit_predict(X_scaled)
+    # Modelul KMeans (pe date standardizate)
+    df_cluster["Cluster"] = analysis.kmeans_clusters(df_cluster[features], n_clusters=3)
 
     # --- VIZUALIZARE REZULTATE ---
     col_cl1, col_cl2 = st.columns([1, 2])
@@ -494,42 +461,29 @@ elif menu == "8. Regresie logistică":
     df_log = data.fill_missing_with_median(df, ["TotalMinutesAsleep"])
 
     # Creare variabilă target
-    df_log["HealthyLifestyle"] = np.where(
-        (df_log["TotalSteps"] >= 8000) &
-        (df_log["SedentaryMinutes"] < 1000) &
-        (df_log["TotalMinutesAsleep"] >= 420),
-        1, 0
-    )
+    df_log["HealthyLifestyle"] = analysis.healthy_lifestyle_label(df_log)
 
     features = ["Calories", "SedentaryMinutes", "VeryActiveMinutes", "TotalMinutesAsleep", "TotalDistance"]
     X = data.fill_missing_with_median(df_log[features], features)
 
     y = df_log["HealthyLifestyle"]
 
-    # Split și Scalare
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
-
-    # Model
-    model = LogisticRegression(max_iter=1000)
-    model.fit(X_train_scaled, y_train)
-    y_pred = model.predict(X_test_scaled)
+    # Split, scalare și antrenarea modelului
+    result = analysis.train_logistic_regression(X, y, test_size=0.3, random_state=42)
+    acc = result.accuracy
 
     # --- AFIȘARE REZULTATE ---
     c1, c2 = st.columns(2)
 
     with c1:
         st.subheader("Performanța Modelului")
-        acc = accuracy_score(y_test, y_pred)
         st.metric("Acuratețe (Accuracy)", f"{acc:.2%}")
         st.write("Raport detaliat:")
-        st.text(classification_report(y_test, y_pred))
+        st.text(result.report)
 
     with c2:
         st.subheader("Matricea de Confuzie")
-        cm = confusion_matrix(y_test, y_pred)
+        cm = result.confusion_matrix
 
         # Vizualizare grafică a matricei de confuzie
         fig, ax = plt.subplots(figsize=(4, 3))
@@ -542,8 +496,7 @@ elif menu == "8. Regresie logistică":
 
     # --- IMPORTANȚA VARIABILELOR ---
     st.subheader("Importanța Factorilor în Stilul de Viață")
-    importance = pd.DataFrame({'Feature': features, 'Importance': model.coef_[0]})
-    importance = importance.sort_values(by='Importance', ascending=False)
+    importance = result.coefficients
     st.bar_chart(data=importance, x='Feature', y='Importance', color="#00B0B9")
 
     with st.expander("📝 Interpretare Rezultate"):
@@ -573,8 +526,7 @@ elif menu == "9. Regresie multiplă":
     y = df_reg["Calories"]
 
     # Adăugăm constanta și antrenăm modelul
-    X_with_const = sm.add_constant(X)
-    model = sm.OLS(y, X_with_const).fit()
+    model, X_with_const = analysis.fit_ols(X, y)
 
     # --- NIVEL 1: METRICI DE CALITATE ---
     col_r1, col_r2, col_r3 = st.columns(3)

@@ -69,9 +69,12 @@ internet connection.
 
 ```
 fitbit-health-analytics/
-├── app.py             # Streamlit app
-├── data/              # Fitbit CSV files
-├── requirements.txt   # Pinned Python dependencies
+├── app.py                 # Streamlit app (user interface only)
+├── fitbit_analytics/
+│   ├── data.py            # Loading, merging and cleaning the CSV files
+│   └── analysis.py        # Outliers, encoding, scaling, clustering and regression models
+├── data/                  # Fitbit CSV files
+├── requirements.txt       # Pinned Python dependencies
 └── README.md
 ```
 
