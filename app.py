@@ -6,16 +6,19 @@ import geopandas as gpd
 
 from fitbit_analytics import analysis, data
 
+AUTHOR_NAME = "Mara-Livia Popa"
+GITHUB_URL = "https://github.com/xwmara"
+LINKEDIN_URL = "https://www.linkedin.com/in/mara-livia-popa-99ba18337/"
 
-#  Configurația paginii
-st.set_page_config(page_title="Proiect Fitbit", layout="wide")
+# Page configuration
+st.set_page_config(page_title="Fitbit Health Analytics", layout="wide")
 
-# --- STILIZARE CUSTOM (CSS) ---
+# --- CUSTOM STYLING (CSS) ---
 st.markdown(
     """
     <style>
     .main-title {
-        color: #00B0B9; 
+        color: #00B0B9;
         font-size: 42px;
         text-align: center;
         font-weight: bold;
@@ -32,11 +35,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.markdown('<h1 class="main-title">Modelarea și evaluarea stilului de viață sănătos</h1>', unsafe_allow_html=True)
-st.write("Aplicație Streamlit realizată pe baza datelor Fitbit")
+st.markdown('<h1 class="main-title">Modelling and Evaluating a Healthy Lifestyle</h1>', unsafe_allow_html=True)
+st.write("A Streamlit app built on Fitbit activity and sleep data")
 
 # -----------------------------
-# ÎNCĂRCARE DATE
+# DATA LOADING
 # -----------------------------
 @st.cache_data
 def load_data():
@@ -46,378 +49,375 @@ def load_data():
 
 daily_activity, sleep_data, df = load_data()
 
-# --- GESTIONAREA STĂRII (Session State) ---
-if 'nume_vizitator' not in st.session_state:
-    st.session_state['nume_vizitator'] = ""
+# --- SESSION STATE ---
+if 'visitor_name' not in st.session_state:
+    st.session_state['visitor_name'] = ""
 
-# În sidebar, sub imaginea de profil
+# Personal greeting at the top of the sidebar
 with st.sidebar:
-    nume = st.text_input("Introdu numele tău pentru personalizare:", value=st.session_state['nume_vizitator'])
-    st.session_state['nume_vizitator'] = nume
-    if st.session_state['nume_vizitator']:
-        st.write(f"Salut, **{st.session_state['nume_vizitator']}**! 👋")
+    name = st.text_input("Enter your name to personalise the app:", value=st.session_state['visitor_name'])
+    st.session_state['visitor_name'] = name
+    if st.session_state['visitor_name']:
+        st.write(f"Hi, **{st.session_state['visitor_name']}**! 👋")
 
-# --- PERSONALIZARE SIDEBAR ---
+# --- SIDEBAR PROFILE ---
 st.sidebar.markdown(
     """
     <div style="text-align: center;">
         <img src="https://www.pngall.com/wp-content/uploads/5/Profile-Avatar-PNG.png" width="100" style="border-radius: 50%;">
-        <h2 style="color: #00B0B9;">Utilizator Fitbit</h2>
-        <p style="font-size: 0.9em; color: gray;">Analiza Sănătății v1.0</p>
+        <h2 style="color: #00B0B9;">Fitbit User</h2>
+        <p style="font-size: 0.9em; color: gray;">Health Analytics v1.0</p>
     </div>
     """,
     unsafe_allow_html=True
 )
 
 st.sidebar.markdown("---")
-st.sidebar.subheader("Statistici Rapide")
+st.sidebar.subheader("Quick Stats")
 
-# Metrici stilizate
-st.sidebar.metric("Pași Medii", f"{int(df['TotalSteps'].mean())}", "Pași/zi")
-st.sidebar.metric("Calorii Medii", f"{int(df['Calories'].mean())} kcal")
-st.sidebar.metric("Somn Mediu", f"{int(df['TotalMinutesAsleep'].mean() if not np.isnan(df['TotalMinutesAsleep'].mean()) else 0)} min")
+# Headline metrics
+st.sidebar.metric("Average Steps", f"{int(df['TotalSteps'].mean())}", "steps/day")
+st.sidebar.metric("Average Calories", f"{int(df['Calories'].mean())} kcal")
+st.sidebar.metric("Average Sleep", f"{int(df['TotalMinutesAsleep'].mean() if not np.isnan(df['TotalMinutesAsleep'].mean()) else 0)} min")
 
 st.sidebar.markdown("---")
-# DEFINIREA VARIABILEI MENU
+# Section menu
 menu = st.sidebar.selectbox(
-    "Alege secțiunea",
+    "Choose a section",
     [
-        "1. Despre proiect",
-        "2. Explorarea datelor",
-        "3. Valori lipsă",
-        "4. Valori extreme",
-        "5. Statistici și agregări",
-        "6. Codificare și scalare",
-        "7. Clusterizare KMeans",
-        "8. Regresie logistică",
-        "9. Regresie multiplă",
-        "10. Analiză Geografică",
-        "11. Concluzii"
+        "1. About the project",
+        "2. Data exploration",
+        "3. Missing values",
+        "4. Outliers",
+        "5. Statistics and aggregations",
+        "6. Encoding and scaling",
+        "7. K-Means clustering",
+        "8. Logistic regression",
+        "9. Multiple regression",
+        "10. Geographic analysis",
+        "11. Conclusions"
     ]
 )
 
-# Adăugăm și footer-ul de care vorbeam, ca să fie meniul plin
+# Author credits
 st.sidebar.markdown("---")
 st.sidebar.info(
-    """
-    **Proiect Realizat de:**
-    - Popa Ionela
-    - Popa Mara-Livia
-    - Grupa 1093
+    f"""
+    **Built by {AUTHOR_NAME}**
 
-    *Facultatea CSIE 2026*
+    [GitHub]({GITHUB_URL}) · [LinkedIn]({LINKEDIN_URL})
     """
 )
 
 # -----------------------------
-# 1. DESPRE PROIECT
+# 1. ABOUT THE PROJECT
 # -----------------------------
-if menu == "1. Despre proiect":
-    st.header(" Contextul și Obiectivele Proiectului")
+if menu == "1. About the project":
+    st.header(" Project Context and Goals")
 
     col1, col2 = st.columns([2, 1])
 
     with col1:
         st.write("""
-        Acest proiect reprezintă o analiză exploratorie (EDA) și predictivă asupra datelor colectate de dispozitivele Fitbit.
-        Organizația urmărește monitorizarea stării de sănătate prin indicatori precum:
-        - **Activitate Fizică:** Pași și minute active.
-        - **Sedentarism:** Minute de inactivitate.
-        - **Echilibru:** Corelația dintre somn și consum caloric.
+        This project is an exploratory (EDA) and predictive analysis of data collected by Fitbit devices.
+        The organisation aims to monitor health through indicators such as:
+        - **Physical activity:** steps and active minutes.
+        - **Sedentary behaviour:** minutes of inactivity.
+        - **Balance:** the relationship between sleep and calories burned.
         """)
 
-    with st.expander(" Detalii Tehnice Seturi de Date"):
+    with st.expander(" Dataset Details"):
         st.write("""
-        - **dailyActivity_merged.csv**: Conține date agregate despre pași, distanță și calorii.
-        - **sleepDay_merged.csv**: Monitorizează calitatea somnului și timpul petrecut în pat.
+        - **dailyActivity_merged.csv**: daily totals for steps, distance and calories.
+        - **sleepDay_merged.csv**: sleep tracking, including time asleep and time in bed.
         """)
 
 # -----------------------------
-# 2. EXPLORAREA DATELOR
+# 2. DATA EXPLORATION
 # -----------------------------
-elif menu == "2. Explorarea datelor":
-    st.header("Analiza Exploratorie a Datelor (EDA): Etapa de Investigare")
+elif menu == "2. Data exploration":
+    st.header("Exploratory Data Analysis (EDA)")
 
     st.markdown("""
-    În această etapă analizăm structura seturilor de date pentru a înțelege dimensiunile, 
-    tipurile de variabile și modul în care informația este organizată.
+    In this step we look at the structure of the datasets to understand their size,
+    the variable types and how the information is organised.
     """)
 
-    tab1, tab2, tab3 = st.tabs(["📊 Activitate Zilnică", "😴 Monitorizare Somn", "🔗 Integrare Date (Join)"])
+    tab1, tab2, tab3 = st.tabs(["📊 Daily Activity", "😴 Sleep Tracking", "🔗 Merged Data (Join)"])
 
     with tab1:
-        st.subheader("Structura Activității Zilnice")
+        st.subheader("Daily Activity Structure")
         st.dataframe(daily_activity.head(10), use_container_width=True)
 
-        # ADAUGĂM ASTA: Info despre coloane
+        # Column information
         col1_info, col2_info = st.columns(2)
         with col1_info:
-            st.write(f"**Nr. Observații:** {daily_activity.shape[0]}")
-            st.write(f"**Nr. Coloane:** {daily_activity.shape[1]}")
+            st.write(f"**Rows:** {daily_activity.shape[0]}")
+            st.write(f"**Columns:** {daily_activity.shape[1]}")
         with col2_info:
-            if st.checkbox("Vezi tipuri de date", key="chk1"):
+            if st.checkbox("Show data types", key="chk1"):
                 st.write(daily_activity.dtypes.astype(str))
 
     with tab2:
-        st.subheader("Structura Datelor de Somn")
+        st.subheader("Sleep Data Structure")
         st.dataframe(sleep_data.head(10), use_container_width=True)
 
         col1_s, col2_s = st.columns(2)
         with col1_s:
-            st.write(f"**Nr. Observații:** {sleep_data.shape[0]}")
-            st.write(f"**Nr. Coloane:** {sleep_data.shape[1]}")
+            st.write(f"**Rows:** {sleep_data.shape[0]}")
+            st.write(f"**Columns:** {sleep_data.shape[1]}")
         with col2_s:
-            if st.checkbox("Vezi tipuri de date", key="chk2"):
+            if st.checkbox("Show data types", key="chk2"):
                 st.write(sleep_data.dtypes.astype(str))
 
     with tab3:
-        st.subheader("Dataset Integrat (Master Table)")
-        st.info("Unirea s-a realizat prin **Left Join** pe cheia compusă `[Id, ActivityDate]`.")
+        st.subheader("Merged Dataset (Master Table)")
+        st.info("The tables were combined with a **left join** on the composite key `[Id, ActivityDate]`.")
         st.dataframe(df.head(10), use_container_width=True)
 
 # -----------------------------
-# 3. VALORI LIPSĂ
+# 3. MISSING VALUES
 # -----------------------------
-elif menu == "3. Valori lipsă":
-    st.header("Tratarea Valorilor Lipsă")
+elif menu == "3. Missing values":
+    st.header("Handling Missing Values")
 
     st.markdown("""
-    Identificarea valorilor lipsă este un pas esențial în EDA. Dacă nu sunt tratate, acestea pot duce la erori în 
-    modelele de regresie sau clusterizare. Am utilizat **mediana** pentru imputare deoarece este rezistentă la outlieri.
+    Finding missing values is an essential EDA step. Left untreated, they can cause errors in
+    regression or clustering models. We used the **median** for imputation because it is robust to outliers.
     """)
 
-    # Creăm două coloane pentru a compara situația "Înainte" vs "După"
+    # Two columns to compare "before" and "after"
     col_before, col_after = st.columns(2)
 
     with col_before:
-        st.subheader("1. Înainte de prelucrare")
+        st.subheader("1. Before imputation")
         missing_counts = df.isnull().sum()
-        # Afișăm doar coloanele care chiar au valori lipsă pentru a economisi spațiu
+        # Show only the columns that actually have missing values
         st.dataframe(missing_counts[missing_counts > 0], use_container_width=True)
-        st.warning(" Coloanele cu somn au multe valori lipsă.")
+        st.warning(" The sleep columns have many missing values.")
 
     with col_after:
-        st.subheader("2. După completare")
+        st.subheader("2. After imputation")
 
-        # Realizăm curățarea
+        # Fill the missing values
         df_clean = data.fill_missing_with_median(df)
 
-        # Verificăm din nou
+        # Check again
         after_counts = df_clean.isnull().sum()
         st.dataframe(after_counts[after_counts > 0], use_container_width=True)
-        st.success(" Toate valorile numerice au fost completate.")
+        st.success(" All numeric values have been filled in.")
 
     st.divider()
 
-    st.subheader("Vizualizarea distribuției valorilor lipsă (Inițial)")
+    st.subheader("Missing Values per Column (Before Imputation)")
     if missing_counts.sum() > 0:
-        # Filtrăm doar coloanele cu valori lipsă pentru grafic
+        # Plot only the columns with missing values
         missing_plot_data = missing_counts[missing_counts > 0]
         st.bar_chart(missing_plot_data)
     else:
-        st.write("Nu au fost găsite valori lipsă în setul de date.")
+        st.write("No missing values were found in the dataset.")
 
-    with st.expander("📝 Interpretare Teoretică"):
+    with st.expander("📝 Why the median?"):
         st.write("""
-        Am ales **Imputarea prin Mediană** în locul Mediei deoarece datele Fitbit (cum ar fi pașii sau caloriile) 
-        tind să aibă o distribuție asimetrică. Mediana oferă o estimare mai centrală și mai stabilă în acest context.
+        We chose **median imputation** over the mean because Fitbit data (such as steps or calories)
+        tends to be skewed. In this context the median gives a more central and more stable estimate.
         """)
 
 # -----------------------------
-# 4. VALORI EXTREME
+# 4. OUTLIERS
 # -----------------------------
-elif menu == "4. Valori extreme":
-    st.header("Detectarea Valorilor Extreme (Outliers)")
+elif menu == "4. Outliers":
+    st.header("Outlier Detection")
 
     st.markdown("""
-    Identificarea outlierilor prin metoda **IQR (Interquartile Range)** ne ajută să izolăm înregistrările care 
-    ar putea fi erori de senzor sau comportamente atipice ce pot distorsiona mediile.
+    Detecting outliers with the **IQR (interquartile range)** method helps us isolate records that
+    may be sensor errors or unusual behaviour that could distort the averages.
     """)
 
     col = st.selectbox(
-        "Selectați variabila pentru analiză:",
+        "Select a variable to analyse:",
         ["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes", "TotalMinutesAsleep"]
     )
 
     series = df[col].dropna()
 
-    # Calcule statistice
+    # Summary statistics
     outliers, bounds = analysis.find_outliers(df, col)
     q1, q3, iqr = bounds["q1"], bounds["q3"], bounds["iqr"]
     lower, upper = bounds["lower"], bounds["upper"]
 
-    # --- LAYOUT PE COLOANE ---
+    # --- COLUMN LAYOUT ---
     ol_graph, ol_stats = st.columns([2, 1])
 
     with ol_graph:
         fig, ax = plt.subplots(figsize=(8, 4))
-        # Adăugăm puțină culoare graficului (teal-ul Fitbit)
+        # Fitbit teal for the box
         ax.boxplot(series, vert=False, patch_artist=True,
                    boxprops=dict(facecolor='#00B0B9', color='black'),
                    medianprops=dict(color='orange'))
-        ax.set_title(f"Boxplot: Distribuția {col}")
+        ax.set_title(f"Boxplot: distribution of {col}")
         st.pyplot(fig)
 
     with ol_stats:
-        st.write("**Statistici Detaliate:**")
+        st.write("**Detailed statistics:**")
         st.write(f"🔹 **Q1 (25%):** {q1:.2f}")
         st.write(f"🔹 **Q3 (75%):** {q3:.2f}")
         st.write(f"🔹 **IQR:** {iqr:.2f}")
         st.divider()
         st.metric("Total Outliers", len(outliers))
 
-    # --- TABEL CU VALORI EXTREME ---
+    # --- OUTLIER TABLE ---
     if len(outliers) > 0:
-        with st.expander(f"Vezi cele {len(outliers)} înregistrări extreme detectate"):
-            st.write(f"Aceste valori se situează în afara intervalului [{lower:.2f}, {upper:.2f}]")
+        with st.expander(f"Show the {len(outliers)} outlier records"):
+            st.write(f"These values fall outside the interval [{lower:.2f}, {upper:.2f}]")
             st.dataframe(outliers[["Id", col]].sort_values(by=col, ascending=False))
     else:
-        st.success("Nu au fost detectate valori extreme pentru această variabilă.")
+        st.success("No outliers were detected for this variable.")
 
     st.info(
-        f"**Interpretare:** Valorile care depășesc {upper:.2f} sunt considerate 'extreme superioare', iar cele sub {lower:.2f} sunt 'extreme inferioare'.")
+        f"**Interpretation:** values above {upper:.2f} are upper outliers, and values below {lower:.2f} are lower outliers.")
 
 # -----------------------------
-# 5. STATISTICI ȘI AGREGĂRI
+# 5. STATISTICS AND AGGREGATIONS
 # -----------------------------
-elif menu == "5. Statistici și agregări":
-    st.header(" Statistici Descriptive și Analiză de Grup")
+elif menu == "5. Statistics and aggregations":
+    st.header(" Descriptive Statistics and Group Analysis")
 
-    # --- NIVEL 1: METRICI DE TOP (Cerința: Prelucrări statistice) ---
-    st.subheader("Indicatori Cheie (Global)")
+    # --- LEVEL 1: KEY METRICS ---
+    st.subheader("Key Indicators (Overall)")
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("Pași Maximi", f"{int(df['TotalSteps'].max())}")
+        st.metric("Max Steps", f"{int(df['TotalSteps'].max())}")
     with col2:
-        st.metric("Record Calorii", f"{int(df['Calories'].max())}")
+        st.metric("Max Calories", f"{int(df['Calories'].max())}")
     with col3:
-        st.metric("Min. Sedentare (Avg)", f"{int(df['SedentaryMinutes'].mean())}")
+        st.metric("Avg Sedentary Min.", f"{int(df['SedentaryMinutes'].mean())}")
     with col4:
-        st.metric("Somn Record", f"{int(df['TotalMinutesAsleep'].max())} min")
+        st.metric("Max Sleep", f"{int(df['TotalMinutesAsleep'].max())} min")
 
     st.divider()
 
-    # --- NIVEL 2: TABELE DE DATE (Cerința: Grupări și Agregări) ---
+    # --- LEVEL 2: TABLES (grouping and aggregation) ---
     col_a, col_b = st.columns(2)
 
     with col_a:
-        st.subheader(" Statistici Descriptive")
-        st.write("Sumar numeric al variabilelor principale:")
+        st.subheader(" Descriptive Statistics")
+        st.write("Numeric summary of the main variables:")
         st.dataframe(df[["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes"]].describe(),
                      use_container_width=True)
 
     with col_b:
-        st.subheader("Media per Utilizator")
-        st.write("Agregare la nivel de ID (primele 10 rânduri):")
+        st.subheader("Average per User")
+        st.write("Aggregated by user Id (first 10 rows):")
         grouped_user = df.groupby("Id")[["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes"]].mean()
         st.dataframe(grouped_user.head(10), use_container_width=True)
 
     st.divider()
 
-    # --- NIVEL 3: ANALIZA PE ZILE (Cerința: Reprezentări grafice) ---
-    st.subheader("Dinamica Pașilor pe Zilele Săptămânii")
+    # --- LEVEL 3: STEPS BY WEEKDAY ---
+    st.subheader("Average Steps by Day of the Week")
 
-    # Calculăm media pe zile, ordonate de luni până duminică
+    # Mean steps per weekday, ordered Monday to Sunday
     grouped_day = analysis.average_steps_by_weekday(daily_activity)
 
-    # Folosim st.bar_chart pentru interactivitate (e mai modern decât plt.bar)
+    # st.bar_chart gives an interactive chart
     st.bar_chart(data=grouped_day, x="DayOfWeek", y="TotalSteps", color="#00B0B9")
 
-    with st.expander("Vezi tabelul de date pentru grafic"):
+    with st.expander("Show the data behind the chart"):
         st.table(grouped_day)
 
 # -----------------------------
-# 6. CODIFICARE ȘI SCALARE
+# 6. ENCODING AND SCALING
 # -----------------------------
-elif menu == "6. Codificare și scalare":
-    st.header("Codificarea și Scalarea datelor")
+elif menu == "6. Encoding and scaling":
+    st.header("Encoding and Scaling the Data")
 
     st.info("""
-    Această etapă pregătește datele pentru algoritmii de Machine Learning (KMeans, Regresie).
-    Algoritmii bazați pe distanțe (KMeans) necesită scalare pentru ca variabilele cu unități mari (Pași) 
-    să nu domine variabilele cu unități mici (Calorii).
+    This step prepares the data for the machine learning models (K-Means, regression).
+    Distance-based algorithms such as K-Means need scaling so that variables with large values (steps)
+    do not dominate variables with smaller values (calories).
     """)
 
-    # Curățare rapidă pentru a evita erori la scalare
+    # Quick clean-up to avoid errors during scaling
     df_prep = data.fill_missing_with_median(df, ["TotalMinutesAsleep"])
 
-    # --- 1. CODIFICARE (Label Encoding) ---
-    st.subheader("1. Codificarea Variabilelor Categoriale")
+    # --- 1. LABEL ENCODING ---
+    st.subheader("1. Encoding Categorical Variables")
 
     df_prep = analysis.add_lifestyle_encoding(df_prep)
 
     col_cat1, col_cat2 = st.columns(2)
     with col_cat1:
-        st.write("**Noua variabilă creată:**")
+        st.write("**New variable:**")
         st.dataframe(df_prep[["TotalSteps", "LifestyleCategory"]].head(10), use_container_width=True)
 
     with col_cat2:
-        st.write("**Rezultat LabelEncoder:**")
+        st.write("**LabelEncoder result:**")
         st.dataframe(df_prep[["LifestyleCategory", "LifestyleEncoded"]].drop_duplicates(), use_container_width=True)
 
     st.divider()
 
-    # --- 2. SCALARE (StandardScaler) ---
-    st.subheader("2. Scalarea Datelor Numerice (Standardization)")
-    st.write("Transformăm datele pentru a avea media 0 și deviația standard 1.")
+    # --- 2. SCALING (StandardScaler) ---
+    st.subheader("2. Scaling Numeric Data (Standardisation)")
+    st.write("We transform the data to have mean 0 and standard deviation 1.")
 
     features = ["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes", "TotalMinutesAsleep"]
-    # Asigurăm completarea tuturor valorilor nule înainte de scalare
+    # Make sure every missing value is filled before scaling
     X = data.fill_missing_with_median(df_prep[features], features)
     X_scaled_df = analysis.standardize(X)
 
-    tab_raw, tab_scaled = st.tabs(["Date Originale", "Date Scalate (StandardScaler)"])
+    tab_raw, tab_scaled = st.tabs(["Original Data", "Scaled Data (StandardScaler)"])
 
     with tab_raw:
         st.dataframe(X.head(10), use_container_width=True)
 
     with tab_scaled:
         st.dataframe(X_scaled_df.head(10), use_container_width=True)
-        st.caption("Observați cum toate valorile sunt acum pe o scară comparabilă (aprox. între -3 și 3).")
+        st.caption("All values are now on a comparable scale (roughly between -3 and 3).")
 
 # -----------------------------
-# 7. CLUSTERIZARE
+# 7. CLUSTERING
 # -----------------------------
-elif menu == "7. Clusterizare KMeans":
-    st.header("Segmentarea Utilizatorilor (KMeans Clustering)")
+elif menu == "7. K-Means clustering":
+    st.header("User Segmentation (K-Means Clustering)")
 
     st.info("""
-    **Scopul analizei:** Gruparea utilizatorilor în funcție de comportamentul lor (pași, somn, calorii) 
-    pentru a identifica segmente de piață diferite. Am utilizat **k=3 clustere**.
+    **Goal:** group users by their behaviour (steps, sleep, calories)
+    to identify different segments. We used **k = 3 clusters**.
     """)
 
     features = ["TotalSteps", "Calories", "SedentaryMinutes", "VeryActiveMinutes", "TotalMinutesAsleep"]
 
-    # Pregătire date
+    # Data preparation
     df_cluster = data.fill_missing_with_median(df, features)
 
-    # Modelul KMeans (pe date standardizate)
+    # K-Means model (on standardised data)
     df_cluster["Cluster"] = analysis.kmeans_clusters(df_cluster[features], n_clusters=3)
 
-    # --- VIZUALIZARE REZULTATE ---
+    # --- RESULTS ---
     col_cl1, col_cl2 = st.columns([1, 2])
 
     with col_cl1:
-        st.subheader(" Distribuția Clusterelor")
+        st.subheader(" Cluster Sizes")
         st.write(df_cluster["Cluster"].value_counts())
 
-        st.subheader(" Profilul Grupurilor")
+        st.subheader(" Cluster Profiles")
         st.write("""
-        - **Cluster 0:** Utilizatori echilibrați.
-        - **Cluster 1:** Utilizatori foarte activi (Atleți).
-        - **Cluster 2:** Utilizatori sedentari.
+        - **Cluster 0:** balanced users.
+        - **Cluster 1:** very active users (athletes).
+        - **Cluster 2:** sedentary users.
         """)
 
     with col_cl2:
-        st.subheader(" Analiză Comparativă")
+        st.subheader(" Cluster Comparison")
         cluster_means = df_cluster.groupby("Cluster")[features].mean()
         st.dataframe(cluster_means, use_container_width=True)
 
     st.divider()
 
-    # --- GRAFIC SCATTER ÎMBUNĂTĂȚIT ---
-    st.subheader("Vizualizarea Segmentelor: Pași vs. Calorii")
+    # --- SCATTER PLOT ---
+    st.subheader("Segments: Steps vs. Calories")
 
     fig, ax = plt.subplots(figsize=(10, 6))
     scatter = ax.scatter(
@@ -429,8 +429,8 @@ elif menu == "7. Clusterizare KMeans":
         alpha=0.7
     )
 
-    # Adăugăm legendă
-    legend1 = ax.legend(*scatter.legend_elements(), title="Clustere")
+    # Legend
+    legend1 = ax.legend(*scatter.legend_elements(), title="Clusters")
     ax.add_artist(legend1)
 
     ax.set_xlabel("Total Steps")
@@ -439,28 +439,28 @@ elif menu == "7. Clusterizare KMeans":
 
     st.pyplot(fig)
 
-    with st.expander("📝 Interpretare Economică"):
+    with st.expander("📝 Business Interpretation"):
         st.write("""
-        Organizația poate utiliza aceste segmente pentru:
-        1. **Targeting:** Mesaje personalizate pentru grupul sedentar.
-        2. **Retenție:** Programe de loialitate pentru utilizatorii de elită (Cluster 1).
+        The organisation can use these segments for:
+        1. **Targeting:** personalised messages for the sedentary group.
+        2. **Retention:** loyalty programmes for the most active users (Cluster 1).
         """)
 
 # -----------------------------
-# 8. REGRESIE LOGISTICĂ
+# 8. LOGISTIC REGRESSION
 # -----------------------------
-elif menu == "8. Regresie logistică":
-    st.header("Regresie Logistică: Predicția Stilului de Viață")
+elif menu == "8. Logistic regression":
+    st.header("Logistic Regression: Predicting a Healthy Lifestyle")
 
     st.info("""
-    **Obiectiv:** Clasificarea utilizatorilor în categoria 'Stil de viață sănătos' (1) sau 'Necesită îmbunătățiri' (0).
-    Criteriu sănătos: >8000 pași, <1000 min. sedentare și >7 ore de somn.
+    **Goal:** classify each day as 'Healthy lifestyle' (1) or 'Needs improvement' (0).
+    A day counts as healthy with at least 8,000 steps, fewer than 1,000 sedentary minutes and at least 7 hours of sleep.
     """)
 
-    # Curățare date
+    # Data clean-up
     df_log = data.fill_missing_with_median(df, ["TotalMinutesAsleep"])
 
-    # Creare variabilă target
+    # Target variable
     df_log["HealthyLifestyle"] = analysis.healthy_lifestyle_label(df_log)
 
     features = ["Calories", "SedentaryMinutes", "VeryActiveMinutes", "TotalMinutesAsleep", "TotalDistance"]
@@ -468,193 +468,189 @@ elif menu == "8. Regresie logistică":
 
     y = df_log["HealthyLifestyle"]
 
-    # Split, scalare și antrenarea modelului
+    # Train/test split, scaling and model training
     result = analysis.train_logistic_regression(X, y, test_size=0.3, random_state=42)
     acc = result.accuracy
 
-    # --- AFIȘARE REZULTATE ---
+    # --- RESULTS ---
     c1, c2 = st.columns(2)
 
     with c1:
-        st.subheader("Performanța Modelului")
-        st.metric("Acuratețe (Accuracy)", f"{acc:.2%}")
-        st.write("Raport detaliat:")
+        st.subheader("Model Performance")
+        st.metric("Accuracy", f"{acc:.2%}")
+        st.write("Classification report:")
         st.text(result.report)
 
     with c2:
-        st.subheader("Matricea de Confuzie")
+        st.subheader("Confusion Matrix")
         cm = result.confusion_matrix
 
-        # Vizualizare grafică a matricei de confuzie
+        # Confusion matrix heatmap
         fig, ax = plt.subplots(figsize=(4, 3))
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax, cbar=False)
-        ax.set_xlabel('Predicție')
-        ax.set_ylabel('Realitate')
+        ax.set_xlabel('Predicted')
+        ax.set_ylabel('Actual')
         st.pyplot(fig)
 
     st.divider()
 
-    # --- IMPORTANȚA VARIABILELOR ---
-    st.subheader("Importanța Factorilor în Stilul de Viață")
+    # --- FEATURE IMPORTANCE ---
+    st.subheader("Factor Importance for a Healthy Lifestyle")
     importance = result.coefficients
     st.bar_chart(data=importance, x='Feature', y='Importance', color="#00B0B9")
 
-    with st.expander("📝 Interpretare Rezultate"):
+    with st.expander("📝 Interpreting the Results"):
         st.write(f"""
-        Modelul are o acuratețe de **{acc:.2%}**. 
-        Variabila cu cel mai mare coeficient pozitiv influențează cel mai mult probabilitatea ca un utilizator să fie sănătos.
-        În acest caz, se observă că **{importance.iloc[0]['Feature']}** este un factor determinant.
+        The model has an accuracy of **{acc:.2%}**.
+        The variable with the largest positive coefficient has the strongest influence on the probability of a healthy day.
+        Here, **{importance.iloc[0]['Feature']}** is the key factor.
         """)
 
 # -----------------------------
-# 9. REGRESIE MULTIPLĂ
+# 9. MULTIPLE REGRESSION
 # -----------------------------
-elif menu == "9. Regresie multiplă":
-    st.header("Regresie Multiplă: Analiza Factorilor de Consum Caloric")
+elif menu == "9. Multiple regression":
+    st.header("Multiple Regression: What Drives Calories Burned")
 
     st.info("""
-    **Obiectiv:** Înțelegerea modului în care activitatea fizică și somnul influențează consumul de calorii.
-    Folosim modelul **OLS (Ordinary Least Squares)** pentru a determina coeficienții de impact.
+    **Goal:** understand how physical activity and sleep relate to calories burned.
+    We use an **OLS (ordinary least squares)** model to estimate the coefficients.
     """)
 
     cols = ["Calories", "TotalSteps", "VeryActiveMinutes", "SedentaryMinutes", "TotalMinutesAsleep"]
     df_reg = data.fill_missing_with_median(df, cols)
 
-    # Definim variabilele
+    # Model variables
     features = ["TotalSteps", "VeryActiveMinutes", "SedentaryMinutes", "TotalMinutesAsleep"]
     X = df_reg[features]
     y = df_reg["Calories"]
 
-    # Adăugăm constanta și antrenăm modelul
+    # Add the intercept and fit the model
     model, X_with_const = analysis.fit_ols(X, y)
 
-    # --- NIVEL 1: METRICI DE CALITATE ---
+    # --- LEVEL 1: FIT METRICS ---
     col_r1, col_r2, col_r3 = st.columns(3)
     with col_r1:
-        st.metric("R-squared (Explicabilitate)", f"{model.rsquared:.3f}")
+        st.metric("R-squared", f"{model.rsquared:.3f}")
     with col_r2:
         st.metric("Adj. R-squared", f"{model.rsquared_adj:.3f}")
     with col_r3:
-        # Verificăm dacă modelul e valid per ansamblu
+        # Overall significance of the model (F-test)
         status = "Valid" if model.f_pvalue < 0.05 else "Invalid"
-        st.metric("Status Model (p-value)", status)
+        st.metric("Model Status (p-value)", status)
 
     st.divider()
 
-    # --- NIVEL 2: REZULTATE ȘI GRAFIC ---
-    tab_stats, tab_viz = st.tabs(["Raport Statistic", "Grafic Predicție"])
+    # --- LEVEL 2: REPORT AND CHART ---
+    tab_stats, tab_viz = st.tabs(["Statistical Report", "Prediction Chart"])
 
     with tab_stats:
-        st.subheader("Sumar Complet OLS")
+        st.subheader("Full OLS Summary")
         st.text(model.summary())
-        st.caption("P-value < 0.05 indică o variabilă semnificativă statistic.")
+        st.caption("A p-value below 0.05 marks a statistically significant variable.")
 
     with tab_viz:
-        st.subheader("Valori Reale vs. Valori Prezise")
+        st.subheader("Actual vs. Predicted Values")
         df_reg["Predictions"] = model.predict(X_with_const)
 
         fig, ax = plt.subplots(figsize=(10, 5))
         sns.regplot(data=df_reg, x="Calories", y="Predictions",
                     scatter_kws={'alpha': 0.3, 'color': 'gray'},
                     line_kws={'color': '#00B0B9'})
-        ax.set_title("Acuratețea modelului de regresie")
+        ax.set_title("Regression model accuracy")
         st.pyplot(fig)
 
-    # --- NIVEL 3: INTERPRETARE ---
-    with st.expander("Interpretarea Coeficienților (Semnificație Economică)"):
-        coeffs = model.params[1:]  # excludem constanta
+    # --- LEVEL 3: INTERPRETATION ---
+    with st.expander("Interpreting the Coefficients"):
+        coeffs = model.params[1:]  # exclude the intercept
         max_impact = coeffs.idxmax()
         st.write(
-            f"Conform modelului, variabila cu cel mai mare impact pozitiv asupra caloriilor este **{max_impact}**.")
+            f"According to the model, the variable with the largest positive effect on calories is **{max_impact}**.")
         st.write("""
-        - Dacă coeficientul este pozitiv: Creșterea variabilei duce la creșterea consumului caloric.
-        - Dacă p-value (P>|t|) este > 0.05: Variabila nu este considerată un predictor de încredere.
+        - A positive coefficient means calories burned increase as the variable increases.
+        - A p-value (P>|t|) above 0.05 means the variable is not a reliable predictor.
         """)
 
 # -----------------------------
-# 10. Analiza geografica
+# 10. GEOGRAPHIC ANALYSIS
 # -----------------------------
-elif menu == "10. Analiză Geografică":
-    st.header("Analiză Geografică")
-    st.write("Vizualizarea acoperirii globale a utilizatorilor.")
+elif menu == "10. Geographic analysis":
+    st.header("Geographic Analysis")
+    st.write("A view of the users' global coverage.")
 
     col_map1, col_map2 = st.columns([3, 1])
 
     with col_map1:
         st.markdown("""
-            Această vizualizare utilizează pachetul **GeoPandas** pentru a reprezenta prezența globală a 
-            utilizatorilor Fitbit. Organizația colectează date din multiple regiuni pentru a înțelege 
-            influența factorilor geografici asupra stilului de viață.
+            This view uses **GeoPandas** to show the global presence of
+            Fitbit users. The organisation collects data from many regions to understand
+            how geographic factors influence lifestyle.
             """)
 
     with col_map2:
-        st.info("**Sursă Date:** GeoJSON World Boundaries")
-        st.metric("Regiuni Analizate", "Global")
+        st.info("**Data source:** GeoJSON World Boundaries")
+        st.metric("Regions Analysed", "Global")
 
     try:
-        # Folosim URL-ul dar fără motoare complicate care să dea erori de caractere
         url = "https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson"
-        # Citire simplă
         world = gpd.read_file(url)
 
         fig, ax = plt.subplots(figsize=(12, 7))
         world.plot(ax=ax, color='#00B0B9', edgecolor='white', alpha=0.8)
         ax.set_axis_off()
-        ax.set_title("Acoperire Globală Utilizatori Fitbit", fontsize=15)
+        ax.set_title("Global Coverage of Fitbit Users", fontsize=15)
         st.pyplot(fig)
-        st.success("Hartă generată cu succes!")
+        st.success("Map generated successfully!")
 
     except Exception as e:
-        st.error(f"Eroare: {e}")
+        st.error(f"Error: {e}")
         st.info(
-            "Dacă eroarea persistă, înseamnă că link-ul este blocat de firewall-ul local. Putem sări peste hartă dacă nu e critică.")
+            "If the error persists, the link may be blocked by a local firewall. The map is optional.")
 
 # -----------------------------
-# 11. CONCLUZII
+# 11. CONCLUSIONS
 # -----------------------------
-elif menu == "11. Concluzii":
-    st.header("Concluzii")
+elif menu == "11. Conclusions":
+    st.header("Conclusions")
     st.markdown("""
-        În urma analizei complexe a datelor Fitbit, am extras următoarele concluzii relevante pentru managementul 
-        organizației și pentru utilizatorii finali:
+        Our analysis of the Fitbit data led to the following conclusions, relevant both for the
+        organisation's management and for end users:
         """)
 
     st.write("""
-        1. Nivelul activității fizice poate fi evaluat prin numărul de pași și minutele active.
-        2. Sedentarismul ridicat poate indica un stil de viață mai puțin sănătos.
-        3. Somnul este un factor important în evaluarea echilibrului stilului de viață.
-        4. Clusterizarea a permis segmentarea utilizatorilor în grupuri distincte.
-        5. Regresia logistică și regresia multiplă permit evaluarea relației dintre activitate, somn și consum caloric.
+        1. Physical activity can be assessed through step counts and active minutes.
+        2. High sedentary time may indicate a less healthy lifestyle.
+        3. Sleep is an important factor in assessing lifestyle balance.
+        4. Clustering split the users into distinct groups.
+        5. Logistic and multiple regression help assess how activity, sleep and calories burned are related.
         """)
 
-    # Folosim coloane pentru a organiza concluziile pe categorii (cum am discutat)
+    # Conclusions grouped into two columns
     col_conc1, col_conc2 = st.columns(2)
 
     with col_conc1:
-        st.subheader("Analiza Activității")
-        st.success("**Nivelul de activitate:** Poate fi evaluat precis prin corelația dintre pași și minutele active.")
-        st.success("**Segmentare:** Clusterizarea a permis identificarea grupurilor distincte (Sedentari vs. Atleți).")
+        st.subheader("Activity Analysis")
+        st.success("**Activity level:** can be assessed accurately through the correlation between steps and active minutes.")
+        st.success("**Segmentation:** clustering identified distinct groups (sedentary users vs. athletes).")
         st.success(
-            "**Predictibilitate:** Regresia multiplă a arătat clar cum activitatea influențează consumul caloric.")
+            "**Predictability:** multiple regression clearly showed how activity affects calories burned.")
 
     with col_conc2:
-        st.subheader("Stil de Viață")
-        st.info("**Sedentarismul:** Un nivel ridicat indică direct un stil de viață care necesită îmbunătățiri.")
+        st.subheader("Lifestyle")
+        st.info("**Sedentary behaviour:** a high level points directly to a lifestyle that needs improvement.")
         st.info(
-            "**Importanța Somnului:** Este factorul decisiv în evaluarea echilibrului și a recuperării utilizatorilor.")
+            "**Importance of sleep:** it is the deciding factor in assessing users' balance and recovery.")
         st.info(
-            "**Modele Predictive:** Regresia logistică ne ajută să anticipăm dacă un utilizator va avea un comportament sănătos.")
+            "**Predictive models:** logistic regression helps anticipate whether a user will behave healthily.")
 
     st.divider()
 
-    # Secțiunea de recomandări care "ia ochii" profesorului
-    st.subheader("Recomandări pentru Organizație")
+    # Data-driven recommendations
+    st.subheader("Recommendations for the Organisation")
 
-    with st.expander("Vezi propunerile de business bazate pe date"):
+    with st.expander("Show the data-driven business proposals"):
         st.write("""
-            1. **Targeting Personalizat:** Utilizarea clusterelor pentru a trimite notificări specifice fiecărui tip de utilizator.
-            2. **Gamificare:** Crearea de provocări pentru reducerea minutelor sedentare (identificate ca risc).
-            3. **Focus pe Somn:** Încurajarea monitorizării odihnei pentru o imagine completă asupra sănătății.
+            1. **Personalised targeting:** use the clusters to send notifications tailored to each user type.
+            2. **Gamification:** create challenges to reduce sedentary minutes (identified as a risk).
+            3. **Focus on sleep:** encourage sleep tracking for a complete picture of health.
             """)
-
-

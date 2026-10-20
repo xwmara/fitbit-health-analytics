@@ -42,11 +42,11 @@ def test_average_steps_by_weekday_is_ordered_monday_to_sunday():
 # --- Encoding and scaling ---
 
 @pytest.mark.parametrize("steps, expected", [
-    (0, "Sedentar"),
-    (4999, "Sedentar"),
-    (5000, "Moderat activ"),
-    (9999, "Moderat activ"),
-    (10000, "Activ"),
+    (0, "Sedentary"),
+    (4999, "Sedentary"),
+    (5000, "Moderately active"),
+    (9999, "Moderately active"),
+    (10000, "Active"),
 ])
 def test_lifestyle_category_thresholds(steps, expected):
     assert analysis.lifestyle_category(steps) == expected
@@ -55,7 +55,7 @@ def test_lifestyle_category_thresholds(steps, expected):
 def test_add_lifestyle_encoding():
     df = pd.DataFrame({"TotalSteps": [12000, 7000, 3000]})
     encoded = analysis.add_lifestyle_encoding(df)
-    assert encoded["LifestyleCategory"].tolist() == ["Activ", "Moderat activ", "Sedentar"]
+    assert encoded["LifestyleCategory"].tolist() == ["Active", "Moderately active", "Sedentary"]
     # LabelEncoder sorts the labels alphabetically
     assert encoded["LifestyleEncoded"].tolist() == [0, 1, 2]
     assert "LifestyleCategory" not in df.columns

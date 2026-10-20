@@ -51,10 +51,10 @@ def average_steps_by_weekday(daily):
 def lifestyle_category(steps):
     """Map a daily step count to a lifestyle category (thresholds: 5,000 and 10,000 steps)."""
     if steps < 5000:
-        return "Sedentar"
+        return "Sedentary"
     elif steps < 10000:
-        return "Moderat activ"
-    return "Activ"
+        return "Moderately active"
+    return "Active"
 
 
 def add_lifestyle_encoding(df):

@@ -9,16 +9,16 @@ APP_PATH = str(Path(__file__).resolve().parent.parent / "app.py")
 
 # The map section downloads data from the internet, so it is not run here.
 SECTIONS = [
-    "1. Despre proiect",
-    "2. Explorarea datelor",
-    "3. Valori lipsă",
-    "4. Valori extreme",
-    "5. Statistici și agregări",
-    "6. Codificare și scalare",
-    "7. Clusterizare KMeans",
-    "8. Regresie logistică",
-    "9. Regresie multiplă",
-    "11. Concluzii",
+    "1. About the project",
+    "2. Data exploration",
+    "3. Missing values",
+    "4. Outliers",
+    "5. Statistics and aggregations",
+    "6. Encoding and scaling",
+    "7. K-Means clustering",
+    "8. Logistic regression",
+    "9. Multiple regression",
+    "11. Conclusions",
 ]
 
 

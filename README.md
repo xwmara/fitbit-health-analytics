@@ -3,8 +3,8 @@
 An interactive Streamlit app that explores daily activity and sleep data from Fitbit users and applies
 classic data analysis and machine learning techniques to describe what a healthy lifestyle looks like.
 
-> **Status:** work in progress. The app started as a university project and is being refactored into a
-> portfolio project (modular code, tests, English UI, public deployment).
+> **Status:** work in progress. The app started as a university project and is being turned into a
+> portfolio project. Next steps: a review of the analysis methods and a public deployment.
 
 ## What the app does
 
