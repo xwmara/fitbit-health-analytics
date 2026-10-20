@@ -151,3 +151,20 @@ def fit_ols(X, y):
     X_with_const = sm.add_constant(X)
     model = sm.OLS(y, X_with_const).fit()
     return model, X_with_const
+
+
+def standardized_coefficients(model, X, y):
+    """Return a table of raw and standardized OLS coefficients, sorted by effect size.
+
+    A standardized coefficient (beta * sd(x) / sd(y)) is the change in `y`, in standard
+    deviations, when `x` grows by one standard deviation. Unlike raw coefficients, these
+    can be compared across variables measured in different units (steps vs. minutes).
+    """
+    features = list(X.columns)
+    table = pd.DataFrame({
+        "Feature": features,
+        "Coefficient": model.params[features].values,
+        "StdCoefficient": (model.params[features] * X.std() / y.std()).values,
+        "PValue": model.pvalues[features].values,
+    })
+    return table.sort_values("StdCoefficient", key=abs, ascending=False, ignore_index=True)

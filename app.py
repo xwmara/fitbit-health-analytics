@@ -567,14 +567,27 @@ elif menu == "9. Multiple regression":
         st.pyplot(fig)
 
     # --- LEVEL 3: INTERPRETATION ---
-    with st.expander("Interpreting the Coefficients"):
-        coeffs = model.params[1:]  # exclude the intercept
-        max_impact = coeffs.idxmax()
+    with st.expander("Interpreting the Coefficients", expanded=True):
+        # Raw coefficients use different units (per step vs. per minute), so compare standardized ones
+        coef_table = analysis.standardized_coefficients(model, X, y)
+        st.dataframe(coef_table.set_index("Feature").round(4), use_container_width=True)
+
+        significant = coef_table[coef_table["PValue"] < 0.05]
+        top = significant.iloc[0]
         st.write(
-            f"According to the model, the variable with the largest positive effect on calories is **{max_impact}**.")
+            f"According to the model, the variable with the largest effect on calories is **{top.Feature}**: "
+            f"one standard deviation more is associated with **{top.StdCoefficient:+.2f}** standard deviations "
+            f"of calories burned, holding the other variables constant."
+        )
+        corr = X["TotalSteps"].corr(X["VeryActiveMinutes"])
+        st.caption(
+            f"TotalSteps and VeryActiveMinutes are correlated (r = {corr:.2f}), so their separate effects "
+            "should be read with care: part of what one measures is also captured by the other."
+        )
         st.write("""
-        - A positive coefficient means calories burned increase as the variable increases.
-        - A p-value (P>|t|) above 0.05 means the variable is not a reliable predictor.
+        - **Coefficient:** extra calories per one-unit increase (one step, one minute).
+        - **StdCoefficient:** effect in standard deviations, comparable across variables.
+        - A p-value above 0.05 means the variable is not a reliable predictor.
         """)
 
 # -----------------------------

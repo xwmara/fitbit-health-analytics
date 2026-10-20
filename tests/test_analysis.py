@@ -140,3 +140,22 @@ def test_fit_ols_recovers_known_coefficients():
     assert model.params["x1"] == pytest.approx(2)
     assert model.params["x2"] == pytest.approx(-1)
     assert model.rsquared == pytest.approx(1)
+
+
+def test_standardized_coefficients_are_unit_free():
+    rng = np.random.default_rng(2)
+    x1 = rng.normal(size=200)
+    x2 = rng.normal(size=200)
+    # Same underlying effect for both, but x1 is recorded in units 1000 times larger
+    X = pd.DataFrame({"big_units": x1 * 1000, "small_units": x2})
+    y = x1 + x2 + rng.normal(scale=0.1, size=200)
+
+    model, _ = analysis.fit_ols(X, y)
+    table = analysis.standardized_coefficients(model, X, y).set_index("Feature")
+
+    # Raw coefficients differ by ~1000x; standardized ones are nearly equal
+    assert table.loc["small_units", "Coefficient"] / table.loc["big_units", "Coefficient"] > 500
+    assert table.loc["big_units", "StdCoefficient"] == pytest.approx(
+        table.loc["small_units", "StdCoefficient"], rel=0.2
+    )
+    assert table["StdCoefficient"].abs().is_monotonic_decreasing
