@@ -12,10 +12,14 @@ SLEEP_COLUMNS = ["TotalSleepRecords", "TotalMinutesAsleep", "TotalTimeInBed"]
 
 
 def load_raw_data(data_dir=DATA_DIR):
-    """Read the daily activity and sleep CSV files and parse their date columns."""
+    """Read the daily activity and sleep CSV files, drop exact duplicate rows and parse the dates.
+
+    The sleep file contains 3 rows that are exact copies of other rows; keeping them would
+    duplicate those days in the merged table.
+    """
     data_dir = Path(data_dir)
-    daily = pd.read_csv(data_dir / "dailyActivity_merged.csv")
-    sleep = pd.read_csv(data_dir / "sleepDay_merged.csv")
+    daily = pd.read_csv(data_dir / "dailyActivity_merged.csv").drop_duplicates(ignore_index=True)
+    sleep = pd.read_csv(data_dir / "sleepDay_merged.csv").drop_duplicates(ignore_index=True)
 
     daily["ActivityDate"] = pd.to_datetime(daily["ActivityDate"])
     sleep["SleepDay"] = pd.to_datetime(sleep["SleepDay"])

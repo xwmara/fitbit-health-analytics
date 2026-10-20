@@ -38,7 +38,8 @@ The data comes from the public **Crowd-sourced Fitbit datasets 03.12.2016–05.1
 This project uses two of its files, stored in [`data/`](data/):
 
 - `dailyActivity_merged.csv`: 940 daily records from 33 users (steps, distance, active and sedentary minutes, calories)
-- `sleepDay_merged.csv`: 413 daily sleep records from 24 users (minutes asleep, time in bed)
+- `sleepDay_merged.csv`: 413 daily sleep records from 24 users (minutes asleep, time in bed);
+  3 of them are exact duplicates and are removed when the data is loaded
 
 The data covers one month (April–May 2016) from users who volunteered through an online survey, so it is
 a small, self-selected sample and the results should not be generalised to the wider population.

@@ -12,7 +12,7 @@ def raw():
 def test_load_raw_data_reads_both_files(raw):
     daily, sleep = raw
     assert daily.shape == (940, 15)
-    assert sleep.shape == (413, 5)
+    assert sleep.shape == (410, 5)  # 413 rows in the file minus 3 exact duplicates
     assert daily["Id"].nunique() == 33
     assert sleep["Id"].nunique() == 24
 
@@ -36,12 +36,16 @@ def test_merge_keeps_every_daily_row():
     assert merged_keys == daily_keys
 
 
-def test_merge_row_count_includes_duplicate_sleep_rows():
-    # The sleep file has 3 exact duplicate rows, so the left join yields 943 rows instead of 940.
-    # If the duplicates are ever removed, update this test.
-    _, sleep, merged = data.load_data()
-    assert sleep.duplicated().sum() == 3
-    assert len(merged) == 943
+def test_load_raw_data_removes_duplicate_rows(raw):
+    daily, sleep = raw
+    assert not daily.duplicated().any()
+    assert not sleep.duplicated().any()
+
+
+def test_merge_has_exactly_one_row_per_user_and_day():
+    daily, _, merged = data.load_data()
+    assert len(merged) == len(daily) == 940
+    assert not merged.duplicated(["Id", "ActivityDateOnly"]).any()
 
 
 def test_merge_leaves_sleep_missing_for_days_without_a_record():

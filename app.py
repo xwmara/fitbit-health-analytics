@@ -160,6 +160,7 @@ elif menu == "2. Data exploration":
 
     with tab2:
         st.subheader("Sleep Data Structure")
+        st.caption("Exact duplicate rows in the sleep file are removed when the data is loaded.")
         st.dataframe(sleep_data.head(10), use_container_width=True)
 
         col1_s, col2_s = st.columns(2)
